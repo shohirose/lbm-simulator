@@ -18,15 +18,15 @@ struct Grid2d {
   int nx;
   int ny;
 
-  int size() const { return (nx + 2) * (ny + 2); }
+  int size() const noexcept { return (nx + 2) * (ny + 2); }
 
-  int index(int i, int j) const {
+  int index(int i, int j) const noexcept {
     assert(i >= -1 && i <= ny && "out of bounds error for index i!");
     assert(j >= -1 && j <= nx && "out of bounds error for index j!");
     return (i + 1) * (nx + 2) + j + 1;
   }
 
-  int periodic_index(int i, int j) const {
+  int periodic_index(int i, int j) const noexcept {
     if (i < -1) {
       i += ny + 2;
     }
@@ -84,7 +84,7 @@ class LatticeBoltzmanMethodSimulator {
     wcg_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
-  Eigen::VectorXd run() const {
+  Eigen::VectorXd run() const noexcept {
     const auto size = grid_.size();
     using Eigen::MatrixXd, Eigen::VectorXd;
     using std::chrono::system_clock, std::chrono::duration_cast,
@@ -128,7 +128,8 @@ class LatticeBoltzmanMethodSimulator {
 
   template <typename T1, typename T2>
   Eigen::MatrixXd calc_equilibrium_distribution_function(
-      const Eigen::MatrixBase<T1>& u, const Eigen::MatrixBase<T2>& rho) const {
+      const Eigen::MatrixBase<T1>& u,
+      const Eigen::MatrixBase<T2>& rho) const noexcept {
     using Eigen::MatrixXd;
     MatrixXd feq(9, u.cols());
     for (int i = 0; i < u.cols(); ++i) {
@@ -143,14 +144,15 @@ class LatticeBoltzmanMethodSimulator {
   }
 
   template <typename T1, typename T2, typename T3>
-  Eigen::MatrixXd collision_process(const Eigen::MatrixBase<T1>& f,
-                                    const Eigen::MatrixBase<T2>& feq,
-                                    const Eigen::MatrixBase<T3>& rho) const {
+  Eigen::MatrixXd collision_process(
+      const Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
+      const Eigen::MatrixBase<T3>& rho) const noexcept {
     return f - (f - feq) / tau_ + wcg_ * rho.transpose();
   }
 
   template <typename T>
-  Eigen::MatrixXd propagation_process(const Eigen::MatrixBase<T>& f) const {
+  Eigen::MatrixXd propagation_process(
+      const Eigen::MatrixBase<T>& f) const noexcept {
     using Eigen::MatrixXd;
     MatrixXd fnew = MatrixXd::Zero(f.rows(), f.cols());
     for (int i = -1; i < grid_.ny + 1; ++i) {
@@ -171,7 +173,7 @@ class LatticeBoltzmanMethodSimulator {
   }
 
   template <typename T>
-  void apply_boundary_condition(Eigen::MatrixBase<T>& f) const {
+  void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Bounce-back condition for bottom boundary
     for (int j = -1; j < grid_.nx + 1; ++j) {
       const auto n = grid_.index(-1, j);
