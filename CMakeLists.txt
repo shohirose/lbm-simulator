@@ -21,7 +21,8 @@ INTERFACE
 )
 target_compile_options(lbm
 INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:/W3 /utf-8>
+    $<$<CXX_COMPILER_ID:MSVC>:/W3 /utf-8 /arch:AVX2>
+    $<$<CXX_COMPILER_ID:GNU>:-Wall -Wpedantic -Wextra -mavx>
 )
 target_compile_definitions(lbm
 INTERFACE
