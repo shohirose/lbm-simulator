@@ -6,8 +6,7 @@
 
 namespace fs = std::filesystem;
 
-using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Dynamic,
-    Eigen::Unaligned;
+using Eigen::VectorXd;
 
 int main() {
   const std::array<int, 2> shape = {21, 21};
@@ -19,21 +18,8 @@ int main() {
   const lbm::Parameters params{shape,       external_force, relaxation_time,
                                error_limit, print_freq,     max_iter};
   lbm::PoiseuilleFlowSimulator simulator(params);
-  const MatrixXd u = simulator.calc_velocity();
+  const VectorXd ux = simulator.calc_velocity();
 
-  {
-    Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1] * 2, 2));
-
-    std::ofstream file(fs::path("ux.txt"));
-    file << ux.transpose() << std::endl;
-  }
-
-  {
-    Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> uy(
-        &u(1, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1] * 2, 2));
-
-    std::ofstream file(fs::path("uy.txt"));
-    file << uy.transpose() << std::endl;
-  }
+  std::ofstream file(fs::path("ux.txt"));
+  file << ux << std::endl;
 }

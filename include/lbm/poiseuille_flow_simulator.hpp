@@ -44,7 +44,7 @@ class PoiseuilleFlowSimulator {
     g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
-  Eigen::MatrixXd calc_velocity() const noexcept {
+  Eigen::VectorXd calc_velocity() const noexcept {
     const auto size = grid_.size();
     using Eigen::MatrixXd, Eigen::VectorXd;
     using std::chrono::system_clock, std::chrono::duration_cast,
@@ -90,7 +90,7 @@ class PoiseuilleFlowSimulator {
     fmt::print("total iter = {}, eps = {:.6e}, simulation time = {:.3} sec\n",
                tsteps, eps, elapsed_time);
 
-    return u;
+    return this->strip_ux_along_y_axis(u);
   }
 
   template <typename T1, typename T2>
@@ -167,6 +167,17 @@ class PoiseuilleFlowSimulator {
       f(7, nr) = f(7, nl);
       f(8, nl) = f(8, nr);
     }
+  }
+
+  template <typename T>
+  Eigen::VectorXd strip_ux_along_y_axis(
+      const Eigen::MatrixBase<T>& u) const noexcept {
+    using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
+        Eigen::Dynamic;
+    Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
+        &u(0, 0), grid_.ni(), grid_.nj(),
+        Stride<Dynamic, 2>(grid_.nj() * 2, 2));
+    return ux.transpose().col(grid_.nj() / 2);
   }
 
  private:
