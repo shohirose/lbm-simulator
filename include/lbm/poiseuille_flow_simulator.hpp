@@ -33,15 +33,8 @@ class PoiseuilleFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter} {
     // clang-format off
-    c_.transpose() <<  0,  0,
-                       1,  0,
-                       0,  1,
-                      -1,  0,
-                       0, -1,
-                       1,  1,
-                      -1,  1,
-                      -1, -1,
-                       1, -1;
+    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1;
     w_ << 4.0 / 9.0,
           1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
           1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
