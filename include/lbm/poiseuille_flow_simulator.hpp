@@ -72,7 +72,7 @@ class PoiseuilleFlowSimulator {
       rho.noalias() = f.colwise().sum().transpose();
       u.noalias() = c_ * f;
       u.array() /= rho.transpose().replicate<2, 1>().array();
-      
+
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
 
@@ -82,10 +82,13 @@ class PoiseuilleFlowSimulator {
     } while (eps > error_limit_ && tsteps < max_iter_);
 
     const auto end = system_clock::now();
-    const auto elapsed_time = duration_cast<milliseconds>(end - start).count();
+
+    // in seconds
+    const auto elapsed_time =
+        duration_cast<milliseconds>(end - start).count() * 1e-3;
 
     fmt::print("total iter = {}, eps = {:.6e}, simulation time = {:.3} sec\n",
-               tsteps, eps, elapsed_time * 1e-3);
+               tsteps, eps, elapsed_time);
 
     return u;
   }
