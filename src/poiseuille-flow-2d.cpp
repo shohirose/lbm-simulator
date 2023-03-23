@@ -16,7 +16,7 @@ int main() {
   const lbm::Params params{shape,       external_force, relaxation_time,
                            error_limit, print_freq,     max_iter};
   lbm::PoiseuilleFlowSimulator simulator(params);
-  const Eigen::VectorXd u = simulator.run();
+  const Eigen::MatrixXd u = simulator.calc_velocity();
 
   std::ofstream file(fs::path("u.txt"));
   file << u.transpose() << std::endl;

@@ -44,7 +44,7 @@ class PoiseuilleFlowSimulator {
     wcg_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
-  Eigen::VectorXd run() const noexcept {
+  Eigen::MatrixXd calc_velocity() const noexcept {
     const auto size = grid_.size();
     using Eigen::MatrixXd, Eigen::VectorXd;
     using std::chrono::system_clock, std::chrono::duration_cast,
@@ -80,7 +80,7 @@ class PoiseuilleFlowSimulator {
     const auto end = system_clock::now();
     const auto elapsed_time = duration_cast<milliseconds>(end - start).count();
 
-    fmt::print("total iter = {}, eps = {:.6e}, simulation time = {} sec\n",
+    fmt::print("total iter = {}, eps = {:.6e}, simulation time = {:.3} sec\n",
                tsteps, eps, elapsed_time * 1e-3);
 
     return u;
