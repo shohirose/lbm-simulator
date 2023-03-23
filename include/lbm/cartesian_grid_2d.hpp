@@ -68,12 +68,18 @@ class CartesianGrid2d {
     return i * shape_[1] + j;
   }
 
-  template <typename Boundary>
+  template <typename Boundary,
+            std::enable_if_t<std::is_same_v<Boundary, TopBoundary> ||
+                                 std::is_same_v<Boundary, BottomBoundary>,
+                             std::nullptr_t> = nullptr>
   int index(Boundary boundary, int j) const noexcept {
     return detail::boundary_index_impl<Boundary>::eval(j, shape_[0], shape_[1]);
   }
 
-  template <typename Boundary>
+  template <typename Boundary,
+            std::enable_if_t<std::is_same_v<Boundary, LeftBoundary> ||
+                                 std::is_same_v<Boundary, RightBoundary>,
+                             std::nullptr_t> = nullptr>
   int index(int i, Boundary boundary) const noexcept {
     return detail::boundary_index_impl<Boundary>::eval(i, shape_[0], shape_[1]);
   }
