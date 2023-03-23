@@ -12,7 +12,7 @@
 
 namespace lbm {
 
-struct Params {
+struct Parameters {
   std::array<int, 2> grid_shape;
   std::array<double, 2> external_force;
   double relaxation_time;
@@ -23,12 +23,12 @@ struct Params {
 
 class PoiseuilleFlowSimulator {
  public:
-  PoiseuilleFlowSimulator(const Params& params)
+  PoiseuilleFlowSimulator(const Parameters& params)
       : grid_{params.grid_shape},
         c_{},
         w_{},
         tau_{params.relaxation_time},
-        wcg_{},
+        g_{},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter} {
@@ -41,7 +41,7 @@ class PoiseuilleFlowSimulator {
     // clang-format on
 
     Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
-    wcg_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
+    g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
   Eigen::MatrixXd calc_velocity() const noexcept {
@@ -108,7 +108,7 @@ class PoiseuilleFlowSimulator {
   Eigen::MatrixXd collision_process(
       const Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
       const Eigen::MatrixBase<T3>& rho) const noexcept {
-    return f - (f - feq) / tau_ + wcg_ * rho.transpose();
+    return f - (f - feq) / tau_ + g_ * rho.transpose();
   }
 
   template <typename T>
@@ -137,7 +137,7 @@ class PoiseuilleFlowSimulator {
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Bounce-back condition for bottom boundary
     for (int j = 0; j < grid_.nj(); ++j) {
-      //const auto n = grid_.index(0, j);
+      // const auto n = grid_.index(0, j);
       const auto n = grid_.index(bottom, j);
       f(2, n) = f(4, n);
       f(5, n) = f(7, n);
@@ -167,7 +167,7 @@ class PoiseuilleFlowSimulator {
   CartesianGrid2d grid_;
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
-  Eigen::Matrix<double, 9, 1> wcg_;
+  Eigen::Matrix<double, 9, 1> g_;
   double tau_;
   double error_limit_;
   int print_freq_;
