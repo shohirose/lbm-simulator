@@ -68,8 +68,9 @@ class PoiseuilleFlowSimulator {
       f = this->propagation_process(f);
       this->apply_boundary_condition(f);
       rho.noalias() = f.colwise().sum().transpose();
-      u.noalias() = (c_ * f).cwiseQuotient(rho.replicate<1, 2>().transpose());
-      eps = (u - u0).norm();
+      u.noalias() = c_ * f;
+      u.array() /= rho.transpose().replicate<2, 1>().array();
+      eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
 
       if (tsteps % print_freq_ == 0) {
