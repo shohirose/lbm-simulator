@@ -163,7 +163,7 @@ class PoiseuilleFlowSimulator {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), grid_.ni(), grid_.nj(),
+        &u(0, 0), grid_.nj(), grid_.ni(),
         Stride<Dynamic, 2>(grid_.nj() * 2, 2));
     return ux.transpose().col(grid_.nj() / 2);
   }

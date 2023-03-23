@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 using Eigen::VectorXd;
 
 int main() {
-  const std::array<int, 2> shape = {21, 21};
+  const std::array<int, 2> shape = {21, 20};
   const std::array<double, 2> external_force = {0.00001, 0.0};
   const double relaxation_time = 0.56;
   const double error_limit = 1e-10;
