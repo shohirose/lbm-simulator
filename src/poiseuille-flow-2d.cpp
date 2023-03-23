@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "lbm.hpp"
+#include "lbm/poiseuille_flow_simulator.hpp"
 
 namespace fs = std::filesystem;
 
@@ -15,7 +15,7 @@ int main() {
   const int max_iter = 1000000;
   const lbm::Params params{shape,       external_force, relaxation_time,
                            error_limit, print_freq,     max_iter};
-  lbm::LatticeBoltzmanMethodSimulator simulator(params);
+  lbm::PoiseuilleFlowSimulator simulator(params);
   const Eigen::VectorXd u = simulator.run();
 
   std::ofstream file(fs::path("u.txt"));

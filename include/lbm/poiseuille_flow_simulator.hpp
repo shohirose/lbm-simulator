@@ -1,5 +1,5 @@
-#ifndef LBM_HPP
-#define LBM_HPP
+#ifndef LBM_POISEUILLE_FLOW_SIMULATOR_HPP
+#define LBM_POISEUILLE_FLOW_SIMULATOR_HPP
 
 #include <fmt/core.h>
 
@@ -8,42 +8,9 @@
 #include <cassert>
 #include <chrono>
 
+#include "lbm/cartesian_grid_2d.hpp"
+
 namespace lbm {
-
-struct Grid2d {
-  Grid2d(int nx_, int ny_) : nx{nx_}, ny{ny_} {}
-
-  Grid2d(const std::array<int, 2>& shape) : nx{shape[0]}, ny{shape[1]} {}
-
-  int nx;
-  int ny;
-
-  int size() const noexcept { return (nx + 2) * (ny + 2); }
-
-  int index(int i, int j) const noexcept {
-    assert(i >= -1 && i <= ny && "out of bounds error for index i!");
-    assert(j >= -1 && j <= nx && "out of bounds error for index j!");
-    return (i + 1) * (nx + 2) + j + 1;
-  }
-
-  int periodic_index(int i, int j) const noexcept {
-    if (i < -1) {
-      i += ny + 2;
-    }
-    if (j < -1) {
-      j += nx + 2;
-    }
-    if (i > ny) {
-      i -= ny + 2;
-    }
-    if (j > nx) {
-      j -= nx + 2;
-    }
-    assert(i >= -1 && i <= ny && "out of bounds error for index i!");
-    assert(j >= -1 && j <= nx && "out of bounds error for index j!");
-    return (i + 1) * (nx + 2) + j + 1;
-  }
-};
 
 struct Params {
   std::array<int, 2> grid_shape;
@@ -54,9 +21,9 @@ struct Params {
   int max_iter;
 };
 
-class LatticeBoltzmanMethodSimulator {
+class PoiseuilleFlowSimulator {
  public:
-  LatticeBoltzmanMethodSimulator(const Params& params)
+  PoiseuilleFlowSimulator(const Params& params)
       : grid_{params.grid_shape},
         c_{},
         w_{},
@@ -155,8 +122,8 @@ class LatticeBoltzmanMethodSimulator {
       const Eigen::MatrixBase<T>& f) const noexcept {
     using Eigen::MatrixXd;
     MatrixXd fnew = MatrixXd::Zero(f.rows(), f.cols());
-    for (int i = -1; i < grid_.ny + 1; ++i) {
-      for (int j = -1; j < grid_.nx + 1; ++j) {
+    for (int i = 0; i < grid_.ny(); ++i) {
+      for (int j = 0; j < grid_.nx(); ++j) {
         const auto n = grid_.index(i, j);
         fnew(0, n) = f(0, n);
         fnew(1, grid_.periodic_index(i, j + 1)) = f(1, n);
@@ -175,23 +142,23 @@ class LatticeBoltzmanMethodSimulator {
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Bounce-back condition for bottom boundary
-    for (int j = -1; j < grid_.nx + 1; ++j) {
-      const auto n = grid_.index(-1, j);
+    for (int j = 0; j < grid_.nx(); ++j) {
+      const auto n = grid_.index(0, j);
       f(2, n) = f(4, n);
       f(5, n) = f(7, n);
       f(6, n) = f(8, n);
     }
     // Bounce-back condition for top boundary
-    for (int j = -1; j < grid_.nx + 1; ++j) {
-      const auto n = grid_.index(grid_.ny, j);
+    for (int j = 0; j < grid_.nx(); ++j) {
+      const auto n = grid_.index(grid_.ny() - 1, j);
       f(4, n) = f(2, n);
       f(7, n) = f(5, n);
       f(8, n) = f(6, n);
     }
     // Periodic condition
-    for (int i = -1; i < grid_.ny + 1; ++i) {
-      const auto nl = grid_.index(i, -1);
-      const auto nr = grid_.index(i, grid_.nx);
+    for (int i = 0; i < grid_.ny(); ++i) {
+      const auto nl = grid_.index(i, 0);
+      const auto nr = grid_.index(i, grid_.nx() - 1);
       f(1, nl) = f(1, nr);
       f(3, nr) = f(3, nl);
       f(5, nl) = f(5, nr);
@@ -202,7 +169,7 @@ class LatticeBoltzmanMethodSimulator {
   }
 
  private:
-  Grid2d grid_;
+  CartesianGrid2d grid_;
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
   Eigen::Matrix<double, 9, 1> wcg_;
@@ -214,4 +181,4 @@ class LatticeBoltzmanMethodSimulator {
 
 }  // namespace lbm
 
-#endif  // LBM_HPP
+#endif  // LBM_POISEUILLE_FLOW_SIMULATOR_HPP
