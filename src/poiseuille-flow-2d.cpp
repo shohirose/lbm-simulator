@@ -16,14 +16,14 @@ int main() {
   const double error_limit = 1e-10;
   const int print_freq = 5000;
   const int max_iter = 1000000;
-  const lbm::Params params{shape,       external_force, relaxation_time,
-                           error_limit, print_freq,     max_iter};
+  const lbm::Parameters params{shape,       external_force, relaxation_time,
+                               error_limit, print_freq,     max_iter};
   lbm::PoiseuilleFlowSimulator simulator(params);
   const MatrixXd u = simulator.calc_velocity();
 
   {
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1]*2, 2));
+        &u(0, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1] * 2, 2));
 
     std::ofstream file(fs::path("ux.txt"));
     file << ux.transpose() << std::endl;
@@ -31,7 +31,7 @@ int main() {
 
   {
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> uy(
-        &u(1, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1]*2, 2));
+        &u(1, 0), shape[0], shape[1], Stride<Dynamic, 2>(shape[1] * 2, 2));
 
     std::ofstream file(fs::path("uy.txt"));
     file << uy.transpose() << std::endl;
