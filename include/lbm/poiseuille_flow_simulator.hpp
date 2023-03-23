@@ -143,7 +143,6 @@ class PoiseuilleFlowSimulator {
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Bounce-back condition for bottom boundary
     for (int j = 0; j < grid_.nj(); ++j) {
-      // const auto n = grid_.index(0, j);
       const auto n = grid_.index(bottom, j);
       f(2, n) = f(4, n);
       f(5, n) = f(7, n);
@@ -155,17 +154,6 @@ class PoiseuilleFlowSimulator {
       f(4, n) = f(2, n);
       f(7, n) = f(5, n);
       f(8, n) = f(6, n);
-    }
-    // Periodic condition
-    for (int i = 0; i < grid_.ni(); ++i) {
-      const auto nl = grid_.index(i, left);
-      const auto nr = grid_.index(i, right);
-      f(1, nl) = f(1, nr);
-      f(3, nr) = f(3, nl);
-      f(5, nl) = f(5, nr);
-      f(6, nr) = f(6, nl);
-      f(7, nr) = f(7, nl);
-      f(8, nl) = f(8, nr);
     }
   }
 
