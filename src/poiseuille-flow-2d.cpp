@@ -41,10 +41,31 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
+  fs::path p(filename);
+  if (!fs::exists(p)) {
+    std::cerr << fmt::format("Error: file does not exists: {}\n", p.string());
+    std::exit(EXIT_FAILURE);
+  }
+  if (!fs::is_regular_file(p)) {
+    std::cerr << fmt::format("Error: not a regulalr file: {}\n", p.string());
+    std::exit(EXIT_FAILURE);
+  }
+  if (p.extension() != ".json") {
+    std::cerr << fmt::format("Error: not a JSON file: {}\n", p.string());
+    std::exit(EXIT_FAILURE);
+  }
+
   json j;
   {
-    std::ifstream file(fs::path(filename).string());
-    j = json::parse(file);
+    std::ifstream file(p.string());
+    try {
+      j = json::parse(file);
+    } catch (std::exception& e) {
+      std::cerr << fmt::format(
+          "Error occured while reading a JSON file: {}\n  {}", p.string(),
+          e.what());
+      std::exit(EXIT_FAILURE);
+    }
   }
   const auto params = j.get<Parameters>();
 
