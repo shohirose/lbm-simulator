@@ -1,22 +1,53 @@
+#include <CLI/CLI.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 #include "lbm/poiseuille_flow_simulator.hpp"
 
 namespace fs = std::filesystem;
 
 using Eigen::VectorXd;
+using json = nlohmann::json;
+using Parameters = lbm::PoiseuilleFlowSimulator::Parameters;
 
-int main() {
-  const std::array<int, 2> shape = {21, 20};
-  const std::array<double, 2> external_force = {0.00001, 0.0};
-  const double relaxation_time = 0.56;
-  const double error_limit = 1e-10;
-  const int print_freq = 5000;
-  const int max_iter = 1000000;
-  const lbm::Parameters params{shape,       external_force, relaxation_time,
-                               error_limit, print_freq,     max_iter};
+namespace lbm {
+
+void to_json(json& j, const Parameters& params) {
+  j = json{{"gridShape", params.grid_shape},
+           {"externalForce", params.external_force},
+           {"relaxationTime", params.relaxation_time},
+           {"errorLimit", params.error_limit},
+           {"printFrequency", params.print_frequency},
+           {"maxIteration", params.max_iter}};
+}
+
+void from_json(const json& j, Parameters& params) {
+  j.at("gridShape").get_to(params.grid_shape);
+  j.at("externalForce").get_to(params.external_force);
+  j.at("relaxationTime").get_to(params.relaxation_time);
+  j.at("errorLimit").get_to(params.error_limit);
+  j.at("printFrequency").get_to(params.print_frequency);
+  j.at("maxIteration").get_to(params.max_iter);
+}
+
+}  // namespace lbm
+
+int main(int argc, char* argv[]) {
+  CLI::App app{"2D Poiseuille flow simulator"};
+  std::string filename = "poiseuille-flow-2d.json";
+  app.add_option("-f,--file", filename, "Input file name in JSON format.");
+
+  CLI11_PARSE(app, argc, argv);
+
+  json j;
+  {
+    std::ifstream file(fs::path(filename).string());
+    j = json::parse(file);
+  }
+  const auto params = j.get<Parameters>();
+
   lbm::PoiseuilleFlowSimulator simulator(params);
   const VectorXd ux = simulator.calc_velocity();
 

@@ -12,17 +12,17 @@
 
 namespace lbm {
 
-struct Parameters {
-  std::array<int, 2> grid_shape;
-  std::array<double, 2> external_force;
-  double relaxation_time;
-  double error_limit;
-  int print_frequency;
-  int max_iter;
-};
-
 class PoiseuilleFlowSimulator {
  public:
+  struct Parameters {
+    std::array<int, 2> grid_shape;
+    std::array<double, 2> external_force;
+    double relaxation_time;
+    double error_limit;
+    int print_frequency;
+    int max_iter;
+  };
+
   PoiseuilleFlowSimulator(const Parameters& params)
       : grid_{params.grid_shape},
         c_{},
@@ -76,7 +76,7 @@ class PoiseuilleFlowSimulator {
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
 
-      if (tsteps % print_freq_ == 0) {
+      if (print_freq_ > 0 && tsteps % print_freq_ == 0) {
         fmt::print("iter = {}, eps = {:.6e}\n", tsteps, eps);
       }
     } while (eps > error_limit_ && tsteps < max_iter_);
