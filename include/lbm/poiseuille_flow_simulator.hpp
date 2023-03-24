@@ -71,11 +71,7 @@ class PoiseuilleFlowSimulator {
       this->collision_process(f, feq, rho);
       this->propagation_process(f, fold);
       this->apply_boundary_condition(f);
-
-      // Compute properties
-      rho = f.colwise().sum().transpose();
-      u = c_ * f;
-      u.array() /= rho.transpose().replicate<2, 1>().array();
+      this->calc_properties(u, rho, f);
 
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
@@ -153,6 +149,15 @@ class PoiseuilleFlowSimulator {
       f(4, n) = f(2, n);
       f(7, n) = f(5, n);
       f(8, n) = f(6, n);
+    }
+  }
+
+  template <typename T1, typename T2, typename T3>
+  void calc_properties(Eigen::MatrixBase<T1>& u, Eigen::MatrixBase<T2>& rho,
+                       const Eigen::MatrixBase<T3>& f) const noexcept {
+    rho = f.colwise().sum().transpose();
+    for (int i = 0; i < u.cols(); ++i) {
+      u.col(i) = (c_ * f.col(i)) / rho(i);
     }
   }
 
