@@ -69,8 +69,8 @@ class PoiseuilleFlowSimulator {
       this->apply_boundary_condition(f);
 
       // Compute properties
-      rho.noalias() = f.colwise().sum().transpose();
-      u.noalias() = c_ * f;
+      rho = f.colwise().sum().transpose();
+      u = c_ * f;
       u.array() /= rho.transpose().replicate<2, 1>().array();
 
       eps = (u - u0).colwise().norm().maxCoeff();
@@ -101,11 +101,10 @@ class PoiseuilleFlowSimulator {
     MatrixXd feq(9, u.cols());
     for (int i = 0; i < u.cols(); ++i) {
       const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u.col(i);
-      feq.col(i).noalias() =
-          (w_.array() * rho(i) *
-           (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() -
-            1.5 * u.col(i).squaredNorm()))
-              .matrix();
+      feq.col(i) = (w_.array() * rho(i) *
+                    (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() -
+                     1.5 * u.col(i).squaredNorm()))
+                       .matrix();
     }
     return feq;
   }
