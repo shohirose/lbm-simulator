@@ -101,22 +101,14 @@ class PoiseuilleFlowSimulator {
   void calc_equilibrium_distribution_function(
       Eigen::MatrixBase<T1>& feq, const Eigen::MatrixBase<T2>& u,
       const Eigen::MatrixBase<T3>& rho) const noexcept {
-    using Eigen::RowVectorXd;
-    using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
-    const Matrix9Xd cu = c_.transpose() * u;
-    const RowVectorXd u2 = u.colwise().squaredNorm();
-    feq = ((w_ * rho.transpose()).array() *
-           (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() -
-            1.5 * u2.replicate<9, 1>().array()))
-              .matrix();
-    // for (int i = 0; i < feq.cols(); ++i) {
-    //   const double u2 = u.col(i).squaredNorm();
-    //   for (int k = 0; k < 9; ++k) {
-    //     const double cu = c_.col(k).dot(u.col(i));
-    //     feq(k, i) =
-    //         w_(k) * rho(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-    //   }
-    // }
+    for (int i = 0; i < feq.cols(); ++i) {
+      const auto u2 = u.col(i).squaredNorm();
+      for (int k = 0; k < 9; ++k) {
+        const auto cu = c_.col(k).dot(u.col(i));
+        feq(k, i) =
+            w_(k) * rho(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+      }
+    }
   }
 
   template <typename T1, typename T2, typename T3>
