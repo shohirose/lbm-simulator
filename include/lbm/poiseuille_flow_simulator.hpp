@@ -27,8 +27,8 @@ class PoiseuilleFlowSimulator {
       : grid_{params.grid_shape},
         c_{},
         w_{},
-        tau_{params.relaxation_time},
         g_{},
+        tau_{params.relaxation_time},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter} {
