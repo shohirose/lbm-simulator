@@ -121,7 +121,6 @@ class PoiseuilleFlowSimulator {
     for (int i = 0; i < grid_.ni(); ++i) {
       for (int j = 0; j < grid_.nj(); ++j) {
         const auto n = grid_.index(i, j);
-        f(0, n) = fold(0, n);
         f(1, grid_.periodic_index(i, j + 1)) = fold(1, n);
         f(2, grid_.periodic_index(i + 1, j)) = fold(2, n);
         f(3, grid_.periodic_index(i, j - 1)) = fold(3, n);
