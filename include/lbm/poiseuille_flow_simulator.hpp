@@ -45,17 +45,21 @@ class PoiseuilleFlowSimulator {
   }
 
   Eigen::VectorXd calc_velocity() const noexcept {
-    const auto size = grid_.size();
     using Eigen::MatrixXd, Eigen::VectorXd;
+    using Matrix2Xd = Eigen::Matrix<double, 2, Eigen::Dynamic>;
+    using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
     using std::chrono::system_clock, std::chrono::duration_cast,
         std::chrono::milliseconds;
 
     // Initialization
-    MatrixXd u = MatrixXd::Zero(2, size);
+    const auto size = grid_.size();
+    Matrix2Xd u = Matrix2Xd::Zero(2, size);
     MatrixXd u0 = u;
     VectorXd rho = VectorXd::Ones(size);
-    MatrixXd feq = this->calc_equilibrium_distribution_function(u, rho);
-    MatrixXd f = feq;
+    Matrix9Xd feq(9, size);
+    this->calc_equilibrium_distribution_function(feq, u, rho);
+    Matrix9Xd f = feq;
+    Matrix9Xd fold = f;
 
     double eps = 1.0;
     int tsteps = 0;
@@ -63,9 +67,9 @@ class PoiseuilleFlowSimulator {
 
     do {
       tsteps += 1;
-      feq = this->calc_equilibrium_distribution_function(u, rho);
-      f = this->collision_process(f, feq, rho);
-      f = this->propagation_process(f);
+      this->calc_equilibrium_distribution_function(feq, u, rho);
+      this->collision_process(f, feq, rho);
+      this->propagation_process(f, fold);
       this->apply_boundary_condition(f);
 
       // Compute properties
@@ -93,49 +97,53 @@ class PoiseuilleFlowSimulator {
     return this->strip_ux_along_y_axis(u);
   }
 
-  template <typename T1, typename T2>
-  Eigen::MatrixXd calc_equilibrium_distribution_function(
-      const Eigen::MatrixBase<T1>& u,
-      const Eigen::MatrixBase<T2>& rho) const noexcept {
-    using Eigen::MatrixXd;
-    MatrixXd feq(9, u.cols());
-    for (int i = 0; i < u.cols(); ++i) {
-      const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u.col(i);
-      feq.col(i) = (w_.array() * rho(i) *
-                    (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() -
-                     1.5 * u.col(i).squaredNorm()))
-                       .matrix();
-    }
-    return feq;
+  template <typename T1, typename T2, typename T3>
+  void calc_equilibrium_distribution_function(
+      Eigen::MatrixBase<T1>& feq, const Eigen::MatrixBase<T2>& u,
+      const Eigen::MatrixBase<T3>& rho) const noexcept {
+    using Eigen::RowVectorXd;
+    using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
+    const Matrix9Xd cu = c_.transpose() * u;
+    const RowVectorXd u2 = u.colwise().squaredNorm();
+    feq = ((w_ * rho.transpose()).array() *
+           (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() -
+            1.5 * u2.replicate<9, 1>().array()))
+              .matrix();
+    // for (int i = 0; i < feq.cols(); ++i) {
+    //   const double u2 = u.col(i).squaredNorm();
+    //   for (int k = 0; k < 9; ++k) {
+    //     const double cu = c_.col(k).dot(u.col(i));
+    //     feq(k, i) =
+    //         w_(k) * rho(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+    //   }
+    // }
   }
 
   template <typename T1, typename T2, typename T3>
-  Eigen::MatrixXd collision_process(
-      const Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
-      const Eigen::MatrixBase<T3>& rho) const noexcept {
-    return f - (f - feq) / tau_ + g_ * rho.transpose();
+  void collision_process(Eigen::MatrixBase<T1>& f,
+                         const Eigen::MatrixBase<T2>& feq,
+                         const Eigen::MatrixBase<T3>& rho) const noexcept {
+    f = f - (f - feq) / tau_ + g_ * rho.transpose();
   }
 
-  template <typename T>
-  Eigen::MatrixXd propagation_process(
-      const Eigen::MatrixBase<T>& f) const noexcept {
-    using Eigen::MatrixXd;
-    MatrixXd fnew = MatrixXd::Zero(f.rows(), f.cols());
+  template <typename T1, typename T2>
+  void propagation_process(Eigen::MatrixBase<T1>& f,
+                           Eigen::MatrixBase<T2>& fold) const noexcept {
+    fold = f;
     for (int i = 0; i < grid_.ni(); ++i) {
       for (int j = 0; j < grid_.nj(); ++j) {
         const auto n = grid_.index(i, j);
-        fnew(0, n) = f(0, n);
-        fnew(1, grid_.periodic_index(i, j + 1)) = f(1, n);
-        fnew(2, grid_.periodic_index(i + 1, j)) = f(2, n);
-        fnew(3, grid_.periodic_index(i, j - 1)) = f(3, n);
-        fnew(4, grid_.periodic_index(i - 1, j)) = f(4, n);
-        fnew(5, grid_.periodic_index(i + 1, j + 1)) = f(5, n);
-        fnew(6, grid_.periodic_index(i + 1, j - 1)) = f(6, n);
-        fnew(7, grid_.periodic_index(i - 1, j - 1)) = f(7, n);
-        fnew(8, grid_.periodic_index(i - 1, j + 1)) = f(8, n);
+        f(0, n) = fold(0, n);
+        f(1, grid_.periodic_index(i, j + 1)) = fold(1, n);
+        f(2, grid_.periodic_index(i + 1, j)) = fold(2, n);
+        f(3, grid_.periodic_index(i, j - 1)) = fold(3, n);
+        f(4, grid_.periodic_index(i - 1, j)) = fold(4, n);
+        f(5, grid_.periodic_index(i + 1, j + 1)) = fold(5, n);
+        f(6, grid_.periodic_index(i + 1, j - 1)) = fold(6, n);
+        f(7, grid_.periodic_index(i - 1, j - 1)) = fold(7, n);
+        f(8, grid_.periodic_index(i - 1, j + 1)) = fold(8, n);
       }
     }
-    return fnew;
   }
 
   template <typename T>
