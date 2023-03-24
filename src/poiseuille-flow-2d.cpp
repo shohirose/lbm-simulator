@@ -34,6 +34,9 @@ void from_json(const json& j, Parameters& params) {
 
 }  // namespace lbm
 
+void check_path(const fs::path& p);
+Parameters get_parameters(const fs::path& p);
+
 int main(int argc, char* argv[]) {
   CLI::App app{"2D Poiseuille flow simulator"};
   std::string filename = "poiseuille-flow-2d.json";
@@ -42,6 +45,17 @@ int main(int argc, char* argv[]) {
   CLI11_PARSE(app, argc, argv);
 
   fs::path p(filename);
+  check_path(p);
+  const auto params = get_parameters(p);
+
+  lbm::PoiseuilleFlowSimulator simulator(params);
+  const VectorXd ux = simulator.calc_velocity();
+
+  std::ofstream file(fs::path("ux.txt"));
+  file << ux << std::endl;
+}
+
+void check_path(const fs::path& p) {
   if (!fs::exists(p)) {
     std::cerr << fmt::format("Error: file does not exists: {}\n", p.string());
     std::exit(EXIT_FAILURE);
@@ -54,24 +68,17 @@ int main(int argc, char* argv[]) {
     std::cerr << fmt::format("Error: not a JSON file: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
+}
 
-  json j;
-  {
+Parameters get_parameters(const fs::path& p) {
+  try {
     std::ifstream file(p.string());
-    try {
-      j = json::parse(file);
-    } catch (std::exception& e) {
-      std::cerr << fmt::format(
-          "Error occured while reading a JSON file: {}\n  {}", p.string(),
-          e.what());
-      std::exit(EXIT_FAILURE);
-    }
+    const auto j = json::parse(file);
+    return j.get<Parameters>();
+  } catch (std::exception& e) {
+    std::cerr << fmt::format(
+        "Error occured while reading a JSON file: {}\n  {}", p.string(),
+        e.what());
+    std::exit(EXIT_FAILURE);
   }
-  const auto params = j.get<Parameters>();
-
-  lbm::PoiseuilleFlowSimulator simulator(params);
-  const VectorXd ux = simulator.calc_velocity();
-
-  std::ofstream file(fs::path("ux.txt"));
-  file << ux << std::endl;
 }
