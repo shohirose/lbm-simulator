@@ -12,3 +12,11 @@ CMake is required to build the programs. Please run the following command under 
 $ cmake -B build -S .
 $ cmake --build build
 ```
+
+# How to Run
+
+To run `poiseuille-flow-2d`, type the following command under the project root directory:
+
+```bash
+$ build/poiseuille-flow-2d -f data/poiseuille-fow-2d.json
+```
