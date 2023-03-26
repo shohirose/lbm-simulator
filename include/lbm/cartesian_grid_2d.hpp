@@ -11,6 +11,26 @@ class BottomBoundary {};
 class LeftBoundary {};
 class RightBoundary {};
 
+template <typename Boundary>
+struct is_top_or_bottom_boundary {
+  static constexpr auto value = std::is_same_v<Boundary, TopBoundary> ||
+                                std::is_same_v<Boundary, BottomBoundary>;
+};
+
+template <typename Boundary>
+inline constexpr auto is_top_or_bottom_boundary_v =
+    is_top_or_bottom_boundary<Boundary>::value;
+
+template <typename Boundary>
+struct is_left_or_right_boundary {
+  static constexpr auto value = std::is_same_v<Boundary, LeftBoundary> ||
+                                std::is_same_v<Boundary, RightBoundary>;
+};
+
+template <typename Boundary>
+inline constexpr auto is_left_or_right_boundary_v =
+    is_left_or_right_boundary<Boundary>::value;
+
 static constexpr auto top = TopBoundary{};
 static constexpr auto bottom = BottomBoundary{};
 static constexpr auto left = LeftBoundary{};
@@ -99,8 +119,7 @@ class CartesianGrid2d {
    * @param j Index in the J direction
    */
   template <typename Boundary,
-            std::enable_if_t<std::is_same_v<Boundary, TopBoundary> ||
-                                 std::is_same_v<Boundary, BottomBoundary>,
+            std::enable_if_t<is_top_or_bottom_boundary_v<Boundary>,
                              std::nullptr_t> = nullptr>
   int index(Boundary boundary, int j) const noexcept {
     return detail::boundary_index_impl<Boundary>::eval(j, shape_[0], shape_[1]);
@@ -114,8 +133,7 @@ class CartesianGrid2d {
    * @param boundary lbm::left or lbm::right
    */
   template <typename Boundary,
-            std::enable_if_t<std::is_same_v<Boundary, LeftBoundary> ||
-                                 std::is_same_v<Boundary, RightBoundary>,
+            std::enable_if_t<is_left_or_right_boundary_v<Boundary>,
                              std::nullptr_t> = nullptr>
   int index(int i, Boundary boundary) const noexcept {
     return detail::boundary_index_impl<Boundary>::eval(i, shape_[0], shape_[1]);
