@@ -1,0 +1,11 @@
+{
+    "gridShape": [
+        52,
+        52
+    ],
+    "wallVelocity": 0.1,
+    "reynoldsNumber": 100,
+    "errorLimit": 1e-10,
+    "printFrequency": 10000,
+    "maxIteration": 500000
+}

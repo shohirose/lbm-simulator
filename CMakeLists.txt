@@ -59,3 +59,13 @@ PRIVATE
     CLI11
     nlohmann_json::nlohmann_json
 )
+
+add_executable(cavity-flow-2d
+    src/cavity-flow-2d.cpp
+)
+target_link_libraries(cavity-flow-2d
+PRIVATE
+    lbm
+    CLI11
+    nlohmann_json::nlohmann_json
+)
