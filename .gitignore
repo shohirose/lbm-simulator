@@ -2,5 +2,4 @@ build/
 out/
 .vs/
 .vscode/
-ux.txt
-uy.txt
+result/
