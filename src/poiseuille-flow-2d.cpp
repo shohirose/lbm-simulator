@@ -1,4 +1,5 @@
 #include <CLI/CLI.hpp>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -57,15 +58,15 @@ int main(int argc, char* argv[]) {
 
 void check_path(const fs::path& p) {
   if (!fs::exists(p)) {
-    std::cerr << fmt::format("Error: file does not exists: {}\n", p.string());
+    fmt::print(stderr, "Error: file does not exists: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
   if (!fs::is_regular_file(p)) {
-    std::cerr << fmt::format("Error: not a regulalr file: {}\n", p.string());
+    fmt::print(stderr, "Error: not a regulalr file: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
   if (p.extension() != ".json") {
-    std::cerr << fmt::format("Error: not a JSON file: {}\n", p.string());
+    fmt::print(stderr, "Error: not a JSON file: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
 }
@@ -76,9 +77,8 @@ Parameters get_parameters(const fs::path& p) {
     const auto j = json::parse(file);
     return j.get<Parameters>();
   } catch (std::exception& e) {
-    std::cerr << fmt::format(
-        "Error occured while reading a JSON file: {}\n  {}", p.string(),
-        e.what());
+    fmt::print(stderr, "Error occured while reading a JSON file: {}\n  {}",
+               p.string(), e.what());
     std::exit(EXIT_FAILURE);
   }
 }
