@@ -2,7 +2,8 @@
 
 This is a collection of simulators using Lattice Boltzman Method. Currently, the following simulators are implemented:
 
-- Poiseuille flow
+- 2-D Poiseuille flow
+- 2-D cavity flow
 
 # How to Build
 
@@ -15,8 +16,9 @@ $ cmake --build build
 
 # How to Run
 
-To run `poiseuille-flow-2d`, type the following command under the project root directory:
+Type the following commands under the project root directory to run simulators:
 
 ```bash
-$ build/poiseuille-flow-2d -f data/poiseuille-fow-2d.json
+$ ./build/poiseuille-flow-2d -f ./data/poiseuille-flow-2d.json -o ./result/poiseuille-flow-2d
+$ ./build/cavity-flow-2d -f ./data/cavity-flow-2d.json -o ./result/cavity-flow-2d
 ```
