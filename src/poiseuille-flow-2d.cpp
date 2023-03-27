@@ -15,15 +15,6 @@ using Parameters = lbm::PoiseuilleFlowSimulator::Parameters;
 
 namespace lbm {
 
-void to_json(json& j, const Parameters& params) {
-  j = json{{"gridShape", params.grid_shape},
-           {"externalForce", params.external_force},
-           {"relaxationTime", params.relaxation_time},
-           {"errorLimit", params.error_limit},
-           {"printFrequency", params.print_frequency},
-           {"maxIteration", params.max_iter}};
-}
-
 void from_json(const json& j, Parameters& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("externalForce").get_to(params.external_force);
@@ -43,6 +34,9 @@ int main(int argc, char* argv[]) {
   std::string filename = "poiseuille-flow-2d.json";
   app.add_option("-f,--file", filename, "Input file name in JSON format.");
 
+  std::string dir = "result/poiseuille-flow-2d";
+  app.add_option("-o,--output-dir", dir, "Output directory path.");
+
   CLI11_PARSE(app, argc, argv);
 
   fs::path p(filename);
@@ -52,8 +46,16 @@ int main(int argc, char* argv[]) {
   lbm::PoiseuilleFlowSimulator simulator(params);
   const VectorXd ux = simulator.calc_velocity();
 
-  std::ofstream file(fs::path("ux.txt"));
-  file << ux << std::endl;
+  fs::path pd(dir);
+  try {
+    create_directories(pd);
+    std::ofstream file(pd / fs::path("ux.txt"));
+    file << ux << std::endl;
+  } catch (const fs::filesystem_error& e) {
+    fmt::print(stderr, "Error occured while creating directories: {}\n",
+               e.what());
+    std::exit(EXIT_FAILURE);
+  }
 }
 
 void check_path(const fs::path& p) {
