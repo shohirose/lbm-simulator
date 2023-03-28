@@ -124,7 +124,15 @@ class PoiseuilleFlowSimulator {
   void propagation_process(Eigen::MatrixBase<T1>& f,
                            Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
-    for (int i = 0; i < grid_.ni(); ++i) {
+    for (int j = 0; j < grid_.nj(); ++j) {
+      const auto n = grid_.index(bottom, j);
+      f(1, grid_.periodic_index(0, j + 1)) = fold(1, n);
+      f(2, grid_.periodic_index(1, j)) = fold(2, n);
+      f(3, grid_.periodic_index(0, j - 1)) = fold(3, n);
+      f(5, grid_.periodic_index(1, j + 1)) = fold(5, n);
+      f(6, grid_.periodic_index(1, j - 1)) = fold(6, n);
+    }
+    for (int i = 1; i < grid_.ni() - 1; ++i) {
       for (int j = 0; j < grid_.nj(); ++j) {
         const auto n = grid_.index(i, j);
         f(1, grid_.periodic_index(i, j + 1)) = fold(1, n);
@@ -136,6 +144,14 @@ class PoiseuilleFlowSimulator {
         f(7, grid_.periodic_index(i - 1, j - 1)) = fold(7, n);
         f(8, grid_.periodic_index(i - 1, j + 1)) = fold(8, n);
       }
+    }
+    for (int j = 0; j < grid_.nj(); ++j) {
+      const auto n = grid_.index(top, j);
+      f(1, grid_.periodic_index(grid_.ni() - 1, j + 1)) = fold(1, n);
+      f(3, grid_.periodic_index(grid_.ni() - 1, j - 1)) = fold(3, n);
+      f(4, grid_.periodic_index(grid_.ni() - 2, j)) = fold(4, n);
+      f(7, grid_.periodic_index(grid_.ni() - 2, j - 1)) = fold(7, n);
+      f(8, grid_.periodic_index(grid_.ni() - 2, j + 1)) = fold(8, n);
     }
   }
 
