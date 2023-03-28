@@ -26,56 +26,60 @@ void from_json(const json& j, Parameters& params) {
 
 }  // namespace lbm
 
-void check_path(const fs::path& p);
 Parameters get_parameters(const fs::path& p);
 
 int main(int argc, char* argv[]) {
   CLI::App app{"2D Poiseuille flow simulator"};
   std::string filename = "poiseuille-flow-2d.json";
-  app.add_option("-f,--file", filename, "Input file name in JSON format.");
+  app.add_option("-f,--file", filename, "Input file in JSON format.");
 
-  std::string dir = "result/poiseuille-flow-2d";
-  app.add_option("-o,--output-dir", dir, "Output directory path.");
+  std::string dirname = "result/poiseuille-flow-2d";
+  app.add_option("-o,--output-dir", dirname, "Output directory.");
 
   CLI11_PARSE(app, argc, argv);
 
-  fs::path p(filename);
-  check_path(p);
-  const auto params = get_parameters(p);
-
+  const auto params = get_parameters(fs::path(filename));
   lbm::PoiseuilleFlowSimulator simulator(params);
   const VectorXd ux = simulator.calc_velocity();
 
-  fs::path pd(dir);
+  const fs::path dir(dirname);
   try {
-    create_directories(pd);
-    std::ofstream file(pd / fs::path("ux.txt"));
-    file << ux << std::endl;
+    fs::create_directories(dir);
   } catch (const fs::filesystem_error& e) {
     fmt::print(stderr, "Error occured while creating directories: {}\n",
                e.what());
     std::exit(EXIT_FAILURE);
   }
+
+  const fs::path p = dir / fs::path("ux.txt");
+  std::ofstream file(p);
+
+  if (!file) {
+    fmt::print(stderr, "Error: could not open a file: {}\n", p.string());
+    std::exit(EXIT_FAILURE);
+  }
+
+  file << ux << std::endl;
 }
 
-void check_path(const fs::path& p) {
+Parameters get_parameters(const fs::path& p) {
   if (!fs::exists(p)) {
     fmt::print(stderr, "Error: file does not exists: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
-  if (!fs::is_regular_file(p)) {
-    fmt::print(stderr, "Error: not a regulalr file: {}\n", p.string());
-    std::exit(EXIT_FAILURE);
-  }
+
   if (p.extension() != ".json") {
     fmt::print(stderr, "Error: not a JSON file: {}\n", p.string());
     std::exit(EXIT_FAILURE);
   }
-}
 
-Parameters get_parameters(const fs::path& p) {
+  std::ifstream file(p.string());
+  if (!file) {
+    fmt::print(stderr, "Error: could not open a file: {}", p.string());
+    std::exit(EXIT_FAILURE);
+  }
+
   try {
-    std::ifstream file(p.string());
     const auto j = json::parse(file);
     return j.get<Parameters>();
   } catch (std::exception& e) {
