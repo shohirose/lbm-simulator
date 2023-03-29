@@ -1,57 +1,87 @@
 #ifndef LBM_CAVITY_FLOW_SIMULATOR_HPP
 #define LBM_CAVITY_FLOW_SIMULATOR_HPP
 
-#include <fmt/core.h>
-
-#include <Eigen/Core>
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <nlohmann/json.hpp>
+#include <string>
 
 #include "lbm/cartesian_grid_2d.hpp"
+#include "lbm/file_writer.hpp"
 
 namespace lbm {
 
+struct CavityFlowParameters {
+  std::array<int, 2> grid_shape;
+  double wall_velocity;
+  double reynolds_number;
+  double error_limit;
+  int print_frequency;
+  int max_iter;
+  std::string output_directory;
+};
+
+void from_json(const nlohmann::json& j, CavityFlowParameters& params) {
+  j.at("gridShape").get_to(params.grid_shape);
+  j.at("wallVelocity").get_to(params.wall_velocity);
+  j.at("reynoldsNumber").get_to(params.reynolds_number);
+  j.at("errorLimit").get_to(params.error_limit);
+  j.at("printFrequency").get_to(params.print_frequency);
+  j.at("maxIteration").get_to(params.max_iter);
+  j.at("outputDirectory").get_to(params.output_directory);
+}
+
 class CavityFlowSimulator {
  public:
-  struct Parameters {
-    std::array<int, 2> grid_shape;
-    double wall_velocity;
-    double reynolds_number;
-    double error_limit;
-    int print_frequency;
-    int max_iter;
-  };
-
-  struct Properties {
-    Eigen::MatrixXd ux;
-    Eigen::MatrixXd uy;
-  };
-
-  CavityFlowSimulator(const Parameters& params)
+  CavityFlowSimulator(const CavityFlowParameters& params)
       : grid_{params.grid_shape},
         c_{},
         w_{},
         ux_{params.wall_velocity},
-        tau_{},
+        tau_{calc_tau(params.reynolds_number, params.wall_velocity,
+                      static_cast<double>(grid_.nj() - 1))},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
-        max_iter_{params.max_iter} {
-    // clang-format off
-    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1;
-    w_ << 4.0 / 9.0,
-          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
-          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
-    // clang-format on
-    const auto Re = params.reynolds_number;
-    const auto U = params.wall_velocity;
-    const auto L = static_cast<double>(grid_.nj() - 1);
-    const auto nu = U * L / Re;
-    tau_ = 3.0 * nu + 0.5;
+        max_iter_{params.max_iter},
+        writer_{params.output_directory} {
+    this->setup();
   }
 
-  Properties calc_velocity() const noexcept {
+  CavityFlowSimulator(const std::filesystem::path& p)
+      : grid_{},
+        c_{},
+        w_{},
+        ux_{},
+        tau_{},
+        error_limit_{},
+        print_freq_{},
+        max_iter_{},
+        writer_{} {
+    std::ifstream file(p.string());
+    if (!file) {
+      fmt::print(stderr, "Error: could not open a file: {}", p.string());
+      std::exit(EXIT_FAILURE);
+    }
+    try {
+      const auto j = nlohmann::json::parse(file);
+      const auto params = j.get<CavityFlowParameters>();
+      grid_ = params.grid_shape;
+      ux_ = params.wall_velocity;
+      tau_ = calc_tau(params.reynolds_number, params.wall_velocity,
+                      static_cast<double>(grid_.nj() - 1));
+      error_limit_ = params.error_limit;
+      print_freq_ = params.print_frequency;
+      max_iter_ = params.max_iter;
+      writer_.set_output_directory(params.output_directory);
+      this->setup();
+    } catch (const std::exception& e) {
+      fmt::print(stderr, "Error: could not read a JSON file: {}\n", p.string());
+      throw e;
+    }
+  }
+
+  void run() const noexcept {
     using Eigen::MatrixXd, Eigen::VectorXd;
     using Matrix2Xd = Eigen::Matrix<double, 2, Eigen::Dynamic>;
     using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
@@ -94,10 +124,26 @@ class CavityFlowSimulator {
     const auto elapsed_time =
         duration_cast<milliseconds>(end - start).count() * 1e-3;
 
-    fmt::print("total iter = {}, eps = {:.6e}, simulation time = {:.3} sec\n",
+    fmt::print("total iter = {}, eps = {:.6e}, elapsed time = {:.3} sec\n",
                tsteps, eps, elapsed_time);
 
-    return this->get_velocity_components(u);
+    this->write_velocity(u);
+  }
+
+ private:
+  static double calc_tau(double Re, double U, double L) {
+    const auto nu = U * L / Re;
+    return 3.0 * nu + 0.5;
+  }
+
+  void setup() {
+    // clang-format off
+    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1;
+    w_ << 4.0 / 9.0,
+          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
+          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
+    // clang-format on
   }
 
   template <typename T1, typename T2, typename T3>
@@ -142,41 +188,66 @@ class CavityFlowSimulator {
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Half-way bounce-back condition
+    const auto right = grid_.nj() - 1;
+    const auto top = grid_.ni() - 1;
     // Left boundary
-    for (int i = 0; i < grid_.ni(); ++i) {
+    for (int i = 1; i < grid_.ni() - 1; ++i) {
       const auto n = grid_.index(i, 1);
-      f(1, n) = f(3, grid_.periodic_index(i, 0));
-      f(5, n) = f(7, grid_.periodic_index(i - 1, 0));
-      f(8, n) = f(6, grid_.periodic_index(i + 1, 0));
+      f(1, n) = f(3, grid_.index(i, 0));
+      f(5, n) = f(7, grid_.index(i - 1, 0));
+      f(8, n) = f(6, grid_.index(i + 1, 0));
     }
     // Right boundary
-    for (int i = 0; i < grid_.ni(); ++i) {
-      const auto n = grid_.index(i, grid_.nj() - 2);
-      f(3, n) = f(1, grid_.periodic_index(i, grid_.nj() - 1));
-      f(6, n) = f(8, grid_.periodic_index(i + 1, grid_.nj() - 1));
-      f(7, n) = f(5, grid_.periodic_index(i - 1, grid_.nj() - 1));
+    for (int i = 1; i < grid_.ni() - 1; ++i) {
+      const auto n = grid_.index(i, right - 1);
+      f(3, n) = f(1, grid_.index(i, right));
+      f(6, n) = f(8, grid_.index(i + 1, right));
+      f(7, n) = f(5, grid_.index(i - 1, right));
     }
     // Bottom boundary
-    for (int j = 0; j < grid_.nj(); ++j) {
+    for (int j = 1; j < grid_.nj() - 1; ++j) {
       const auto n = grid_.index(1, j);
-      f(2, n) = f(4, grid_.periodic_index(0, j));
-      f(5, n) = f(7, grid_.periodic_index(0, j - 1));
-      f(6, n) = f(8, grid_.periodic_index(0, j + 1));
+      f(2, n) = f(4, grid_.index(0, j));
+      f(5, n) = f(7, grid_.index(0, j - 1));
+      f(6, n) = f(8, grid_.index(0, j + 1));
     }
     // Top boundary
-    for (int j = 0; j < grid_.nj(); ++j) {
-      const auto n = grid_.index(grid_.ni() - 2, j);
-      const auto m = grid_.index(grid_.ni() - 1, j);
+    for (int j = 1; j < grid_.nj() - 1; ++j) {
+      const auto n = grid_.index(top - 1, j);
+      const auto m = grid_.index(top, j);
       const auto rho =
           f(0, m) + f(1, m) + f(3, m) + 2.0 * (f(2, m) + f(5, m) + f(6, m));
-      f(4, n) = f(2, grid_.periodic_index(grid_.ni() - 1, j));
-      f(7, n) =
-          f(5, grid_.periodic_index(grid_.ni() - 1, j + 1)) - rho * ux_ / 6.0;
-      f(8, n) =
-          f(6, grid_.periodic_index(grid_.ni() - 1, j - 1)) + rho * ux_ / 6.0;
+      f(4, n) = f(2, grid_.index(top, j));
+      f(7, n) = f(5, grid_.index(top, j + 1)) - rho * ux_ / 6.0;
+      f(8, n) = f(6, grid_.index(top, j - 1)) + rho * ux_ / 6.0;
     }
-    // Corners
-    // f(6, grid_.index())
+    // Bounce back from corner points
+    // f is calculated by using the equation for feq with density = 1.
+    const auto u2 = ux_ * ux_;
+    {
+      const auto cu = c_.col(5).dot(Eigen::Vector2d(ux_, 0.0));
+      f(5, grid_.index(top - 1, right - 1)) =
+          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
+    }
+    {
+      const auto cu = c_.col(7).dot(Eigen::Vector2d(ux_, 0.0));
+      f(7, grid_.index(top - 1, right - 1)) =
+          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
+    }
+    {
+      const auto cu = c_.col(6).dot(Eigen::Vector2d(ux_, 0.0));
+      f(6, grid_.index(top - 1, 1)) =
+          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
+    }
+    {
+      const auto cu = c_.col(8).dot(Eigen::Vector2d(ux_, 0.0));
+      f(8, grid_.index(top - 1, 1)) =
+          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
+    }
+    f(6, grid_.index(1, top - 1)) = 1.0 / 36.0;
+    f(8, grid_.index(1, top - 1)) = 1.0 / 36.0;
+    f(5, grid_.index(1, 1)) = 1.0 / 36.0;
+    f(7, grid_.index(1, 1)) = 1.0 / 36.0;
   }
 
   template <typename T1, typename T2, typename T3>
@@ -189,8 +260,7 @@ class CavityFlowSimulator {
   }
 
   template <typename T>
-  Properties get_velocity_components(
-      const Eigen::MatrixBase<T>& u) const noexcept {
+  void write_velocity(const Eigen::MatrixBase<T>& u) const noexcept {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
@@ -199,7 +269,8 @@ class CavityFlowSimulator {
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> uy(
         &u(1, 0), grid_.nj(), grid_.ni(),
         Stride<Dynamic, 2>(grid_.nj() * 2, 2));
-    return {ux.transpose(), uy.transpose()};
+    writer_.write(ux.transpose(), "ux.txt");
+    writer_.write(uy.transpose(), "uy.txt");
   }
 
  private:
@@ -211,6 +282,7 @@ class CavityFlowSimulator {
   double error_limit_;
   int print_freq_;
   int max_iter_;
+  FileWriter writer_;
 };
 
 }  // namespace lbm

@@ -10,5 +10,6 @@
     "relaxationTime": 0.56,
     "errorLimit": 1e-10,
     "printFrequency": 5000,
-    "maxIteration": 1000000
+    "maxIteration": 1000000,
+    "outputDirectory": "./result/poiseuille"
 }

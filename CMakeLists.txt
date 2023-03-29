@@ -44,28 +44,18 @@ target_link_libraries(lbm
 INTERFACE
     eigen
     fmt
+    nlohmann_json::nlohmann_json
 )
 target_include_directories(lbm
 INTERFACE
     include
 )
 
-add_executable(poiseuille-flow-2d
-    src/poiseuille-flow-2d.cpp
+add_executable(simulator
+    src/simulator.cpp
 )
-target_link_libraries(poiseuille-flow-2d
+target_link_libraries(simulator
 PRIVATE
     lbm
     CLI11
-    nlohmann_json::nlohmann_json
-)
-
-add_executable(cavity-flow-2d
-    src/cavity-flow-2d.cpp
-)
-target_link_libraries(cavity-flow-2d
-PRIVATE
-    lbm
-    CLI11
-    nlohmann_json::nlohmann_json
 )

@@ -65,6 +65,8 @@ struct boundary_index_impl<RightBoundary> {
 
 class CartesianGrid2d {
  public:
+  CartesianGrid2d() = default;
+  
   /**
    * @brief Construct a new Cartesian Grid 2d object
    *

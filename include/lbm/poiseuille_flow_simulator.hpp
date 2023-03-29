@@ -1,29 +1,46 @@
 #ifndef LBM_POISEUILLE_FLOW_SIMULATOR_HPP
 #define LBM_POISEUILLE_FLOW_SIMULATOR_HPP
 
-#include <fmt/core.h>
-
-#include <Eigen/Core>
 #include <array>
 #include <cassert>
 #include <chrono>
+#include <nlohmann/json.hpp>
+#include <string>
 
 #include "lbm/cartesian_grid_2d.hpp"
+#include "lbm/file_writer.hpp"
 
 namespace lbm {
 
+struct PoiseuilleFlowParameters {
+  std::array<int, 2> grid_shape;
+  std::array<double, 2> external_force;
+  double relaxation_time;
+  double error_limit;
+  int print_frequency;
+  int max_iter;
+  std::string output_directory;
+};
+
+void from_json(const nlohmann::json& j, PoiseuilleFlowParameters& params) {
+  j.at("gridShape").get_to(params.grid_shape);
+  j.at("externalForce").get_to(params.external_force);
+  j.at("relaxationTime").get_to(params.relaxation_time);
+  j.at("errorLimit").get_to(params.error_limit);
+  j.at("printFrequency").get_to(params.print_frequency);
+  j.at("maxIteration").get_to(params.max_iter);
+  j.at("outputDirectory").get_to(params.output_directory);
+}
+
 class PoiseuilleFlowSimulator {
  public:
-  struct Parameters {
-    std::array<int, 2> grid_shape;
-    std::array<double, 2> external_force;
-    double relaxation_time;
-    double error_limit;
-    int print_frequency;
-    int max_iter;
-  };
-
-  PoiseuilleFlowSimulator(const Parameters& params)
+  /**
+   * @brief Construct a new Poiseuille Flow Simulator object
+   *
+   * @param params Parameters
+   * @throw std::filesystem::filesystem_error
+   */
+  PoiseuilleFlowSimulator(const PoiseuilleFlowParameters& params)
       : grid_{params.grid_shape},
         c_{},
         w_{},
@@ -31,20 +48,43 @@ class PoiseuilleFlowSimulator {
         tau_{params.relaxation_time},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
-        max_iter_{params.max_iter} {
-    // clang-format off
-    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1;
-    w_ << 4.0 / 9.0,
-          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
-          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
-    // clang-format on
-
-    Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
-    g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
+        max_iter_{params.max_iter},
+        writer_{params.output_directory} {
+    this->setup(params.external_force);
   }
 
-  Eigen::VectorXd calc_velocity() const noexcept {
+  PoiseuilleFlowSimulator(const std::filesystem::path& p)
+      : grid_{},
+        c_{},
+        w_{},
+        g_{},
+        tau_{},
+        error_limit_{},
+        print_freq_{},
+        max_iter_{},
+        writer_{} {
+    std::ifstream file(p.string());
+    if (!file) {
+      fmt::print(stderr, "Error: could not open a file: {}", p.string());
+      std::exit(EXIT_FAILURE);
+    }
+    try {
+      const auto j = nlohmann::json::parse(file);
+      const auto params = j.get<PoiseuilleFlowParameters>();
+      grid_ = params.grid_shape;
+      tau_ = params.relaxation_time;
+      error_limit_ = params.error_limit;
+      print_freq_ = params.print_frequency;
+      max_iter_ = params.max_iter;
+      writer_.set_output_directory(params.output_directory);
+      this->setup(params.external_force);
+    } catch (const std::exception& e) {
+      fmt::print(stderr, "Error: could not read a JSON file: {}\n", p.string());
+      throw e;
+    }
+  }
+
+  void run() const noexcept {
     using Eigen::MatrixXd, Eigen::VectorXd;
     using Matrix2Xd = Eigen::Matrix<double, 2, Eigen::Dynamic>;
     using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
@@ -88,10 +128,24 @@ class PoiseuilleFlowSimulator {
     const auto elapsed_time =
         duration_cast<milliseconds>(end - start).count() * 1e-3;
 
-    fmt::print("total iter = {}, eps = {:.6e}, simulation time = {:.3} sec\n",
+    fmt::print("total iter = {}, eps = {:.6e}, elapsed time = {:.3} sec\n",
                tsteps, eps, elapsed_time);
 
-    return this->strip_ux_along_y_axis(u);
+    this->write_velocity(u);
+  }
+
+ private:
+  void setup(const std::array<double, 2>& external_force) {
+    // clang-format off
+    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1;
+    w_ << 4.0 / 9.0,
+          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
+          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
+    // clang-format on
+
+    Eigen::Map<const Eigen::Vector2d> g(external_force.data());
+    g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
   template <typename T1, typename T2, typename T3>
@@ -183,17 +237,15 @@ class PoiseuilleFlowSimulator {
   }
 
   template <typename T>
-  Eigen::VectorXd strip_ux_along_y_axis(
-      const Eigen::MatrixBase<T>& u) const noexcept {
+  void write_velocity(const Eigen::MatrixBase<T>& u) const noexcept {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
         &u(0, 0), grid_.nj(), grid_.ni(),
         Stride<Dynamic, 2>(grid_.nj() * 2, 2));
-    return ux.transpose().col(grid_.nj() / 2);
+    writer_.write(ux.transpose().col(grid_.nj() / 2), "ux.txt");
   }
 
- private:
   CartesianGrid2d grid_;
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
@@ -202,6 +254,7 @@ class PoiseuilleFlowSimulator {
   double error_limit_;
   int print_freq_;
   int max_iter_;
+  FileWriter writer_;
 };
 
 }  // namespace lbm
