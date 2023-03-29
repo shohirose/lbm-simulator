@@ -19,6 +19,6 @@ $ cmake --build build
 Type the following commands under the project root directory to run simulators:
 
 ```bash
-$ ./build/poiseuille-flow-2d -f ./data/poiseuille-flow-2d.json -o ./result/poiseuille-flow-2d
-$ ./build/cavity-flow-2d -f ./data/cavity-flow-2d.json -o ./result/cavity-flow-2d
+$ ./build/simulator poiseuille -f data/poiseuille.json
+$ ./build/simulator cavity -f data/cavity.json
 ```
