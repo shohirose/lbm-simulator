@@ -228,33 +228,6 @@ class CavityFlowSimulator {
       f(7, n) = f(5, grid_.index(i + 1, top)) - rho * ux_ / 6.0;
       f(8, n) = f(6, grid_.index(i - 1, top)) + rho * ux_ / 6.0;
     }
-    // // Corner points
-    // // f is calculated by using the equation for feq with density = 1.
-    // const auto u2 = ux_ * ux_;
-    // {
-    //   const auto cu = c_.col(6).dot(Eigen::Vector2d(ux_, 0.0));
-    //   f(6, grid_.index(right - 1, top - 1)) =
-    //       w_(6) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-    // }
-    // {
-    //   const auto cu = c_.col(8).dot(Eigen::Vector2d(ux_, 0.0));
-    //   f(8, grid_.index(right - 1, top - 1)) =
-    //       w_(8) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-    // }
-    // {
-    //   const auto cu = c_.col(5).dot(Eigen::Vector2d(ux_, 0.0));
-    //   f(5, grid_.index(1, top - 1)) =
-    //       w_(5) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-    // }
-    // {
-    //   const auto cu = c_.col(7).dot(Eigen::Vector2d(ux_, 0.0));
-    //   f(7, grid_.index(1, top - 1)) =
-    //       w_(7) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-    // }
-    // f(6, grid_.index(1, 1)) = w_(6);
-    // f(8, grid_.index(1, 1)) = w_(8);
-    // f(5, grid_.index(right - 1, 1)) = w_(5);
-    // f(7, grid_.index(right - 1, 1)) = w_(7);
   }
 
   template <typename T1, typename T2, typename T3>
