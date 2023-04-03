@@ -112,7 +112,8 @@ class PoiseuilleFlowSimulator {
       this->add_external_force(f, rho);
       this->run_propagation_process(f, fold);
       this->apply_boundary_condition(f);
-      this->calc_properties(u, rho, f);
+      calc_density(rho, f);
+      this->calc_velocity(u, rho, f);
 
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
@@ -236,12 +237,17 @@ class PoiseuilleFlowSimulator {
   }
 
   template <typename T1, typename T2, typename T3>
-  void calc_properties(Eigen::MatrixBase<T1>& u, Eigen::MatrixBase<T2>& rho,
-                       const Eigen::MatrixBase<T3>& f) const noexcept {
-    rho = f.colwise().sum().transpose();
+  void calc_velocity(Eigen::MatrixBase<T1>& u, const Eigen::MatrixBase<T2>& rho,
+                     const Eigen::MatrixBase<T3>& f) const noexcept {
     for (int i = 0; i < u.cols(); ++i) {
       u.col(i) = (c_ * f.col(i)) / rho(i);
     }
+  }
+
+  template <typename T1, typename T2>
+  static void calc_density(Eigen::MatrixBase<T1>& rho,
+                           const Eigen::MatrixBase<T2>& f) noexcept {
+    rho = f.colwise().sum().transpose();
   }
 
   template <typename T>

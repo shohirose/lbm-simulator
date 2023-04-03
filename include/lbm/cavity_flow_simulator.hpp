@@ -111,7 +111,9 @@ class CavityFlowSimulator {
       this->run_collision_process(f, feq);
       this->run_propagation_process(f, fold);
       this->apply_boundary_condition(f);
-      this->calc_properties(u, rho, f);
+      calc_density(rho, f);
+      this->calc_velocity(u, rho, f);
+      
 
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
@@ -165,13 +167,13 @@ class CavityFlowSimulator {
 
   template <typename T1, typename T2>
   void run_collision_process(Eigen::MatrixBase<T1>& f,
-                         const Eigen::MatrixBase<T2>& feq) const noexcept {
+                             const Eigen::MatrixBase<T2>& feq) const noexcept {
     f = f - (f - feq) / tau_;
   }
 
   template <typename T1, typename T2>
   void run_propagation_process(Eigen::MatrixBase<T1>& f,
-                           Eigen::MatrixBase<T2>& fold) const noexcept {
+                               Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
     for (int j = 1; j < grid_.ny() - 1; ++j) {
       for (int i = 1; i < grid_.nx() - 1; ++i) {
@@ -256,12 +258,17 @@ class CavityFlowSimulator {
   }
 
   template <typename T1, typename T2, typename T3>
-  void calc_properties(Eigen::MatrixBase<T1>& u, Eigen::MatrixBase<T2>& rho,
-                       const Eigen::MatrixBase<T3>& f) const noexcept {
-    rho = f.colwise().sum().transpose();
+  void calc_velocity(Eigen::MatrixBase<T1>& u, const Eigen::MatrixBase<T2>& rho,
+                     const Eigen::MatrixBase<T3>& f) const noexcept {
     for (int i = 0; i < u.cols(); ++i) {
       u.col(i) = (c_ * f.col(i)) / rho(i);
     }
+  }
+
+  template <typename T1, typename T2>
+  static void calc_density(Eigen::MatrixBase<T1>& rho,
+                           const Eigen::MatrixBase<T2>& f) noexcept {
+    rho = f.colwise().sum().transpose();
   }
 
   template <typename T>
