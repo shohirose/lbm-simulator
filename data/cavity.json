@@ -7,6 +7,6 @@
     "reynoldsNumber": 100,
     "errorLimit": 1e-10,
     "printFrequency": 10000,
-    "maxIteration": 500000,
+    "maxIteration": 50000,
     "outputDirectory": "./result/cavity"
 }
