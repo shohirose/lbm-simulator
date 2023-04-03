@@ -51,10 +51,10 @@ INTERFACE
     include
 )
 
-add_executable(simulator
-    src/simulator.cpp
+add_executable(lbm-simulator
+    src/lbm_simulator.cpp
 )
-target_link_libraries(simulator
+target_link_libraries(lbm-simulator
 PRIVATE
     lbm
     CLI11

@@ -7,7 +7,7 @@ This is a collection of simulators using Lattice Boltzman Method. Currently, the
 
 # How to Build
 
-CMake is required to build the programs. Please run the following command under the root directory:
+CMake is required to build programs. Please run the following commands under the root directory:
 
 ```terminal
 $ cmake -B build -S .
@@ -16,9 +16,9 @@ $ cmake --build build
 
 # How to Run
 
-Type the following commands under the project root directory to run simulators:
+Please type the following commands under the project root directory to run LBM simulators:
 
-```bash
-$ ./build/simulator poiseuille -f data/poiseuille.json
-$ ./build/simulator cavity -f data/cavity.json
+```terminal
+$ ./build/lbm-simulator poiseuille -f data/poiseuille.json
+$ ./build/lbm-simulator cavity -f data/cavity.json
 ```
