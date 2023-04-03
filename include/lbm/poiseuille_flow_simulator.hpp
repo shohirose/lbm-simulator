@@ -108,9 +108,9 @@ class PoiseuilleFlowSimulator {
     do {
       tsteps += 1;
       this->calc_equilibrium_distribution_function(feq, u, rho);
-      this->collision_process(f, feq);
+      this->run_collision_process(f, feq);
       this->add_external_force(f, rho);
-      this->propagation_process(f, fold);
+      this->run_propagation_process(f, fold);
       this->apply_boundary_condition(f);
       this->calc_properties(u, rho, f);
 
@@ -163,7 +163,7 @@ class PoiseuilleFlowSimulator {
   }
 
   template <typename T1, typename T2>
-  void collision_process(Eigen::MatrixBase<T1>& f,
+  void run_collision_process(Eigen::MatrixBase<T1>& f,
                          const Eigen::MatrixBase<T2>& feq) const noexcept {
     f = f - (f - feq) / tau_;
   }
@@ -175,7 +175,7 @@ class PoiseuilleFlowSimulator {
   }
 
   template <typename T1, typename T2>
-  void propagation_process(Eigen::MatrixBase<T1>& f,
+  void run_propagation_process(Eigen::MatrixBase<T1>& f,
                            Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
     for (int i = 0; i < grid_.nx(); ++i) {

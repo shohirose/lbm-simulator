@@ -108,8 +108,8 @@ class CavityFlowSimulator {
     do {
       tsteps += 1;
       this->calc_equilibrium_distribution_function(feq, u, rho);
-      this->collision_process(f, feq);
-      this->propagation_process(f, fold);
+      this->run_collision_process(f, feq);
+      this->run_propagation_process(f, fold);
       this->apply_boundary_condition(f);
       this->calc_properties(u, rho, f);
 
@@ -164,13 +164,13 @@ class CavityFlowSimulator {
   }
 
   template <typename T1, typename T2>
-  void collision_process(Eigen::MatrixBase<T1>& f,
+  void run_collision_process(Eigen::MatrixBase<T1>& f,
                          const Eigen::MatrixBase<T2>& feq) const noexcept {
     f = f - (f - feq) / tau_;
   }
 
   template <typename T1, typename T2>
-  void propagation_process(Eigen::MatrixBase<T1>& f,
+  void run_propagation_process(Eigen::MatrixBase<T1>& f,
                            Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
     for (int j = 1; j < grid_.ny() - 1; ++j) {
