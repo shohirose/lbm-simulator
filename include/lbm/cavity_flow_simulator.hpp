@@ -13,7 +13,7 @@
 namespace lbm {
 
 struct CavityFlowParameters {
-  std::array<int, 2> grid_shape;
+  std::array<int, 2> grid_shape;  ///< Grid shape [nx, ny]
   double wall_velocity;
   double reynolds_number;
   double error_limit;
@@ -22,6 +22,9 @@ struct CavityFlowParameters {
   std::string output_directory;
 };
 
+/**
+ * @brief Conversion function from json to CavityFlowParameter
+ */
 void from_json(const nlohmann::json& j, CavityFlowParameters& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("wallVelocity").get_to(params.wall_velocity);
@@ -40,7 +43,7 @@ class CavityFlowSimulator {
         w_{},
         ux_{params.wall_velocity},
         tau_{calc_tau(params.reynolds_number, params.wall_velocity,
-                      static_cast<double>(grid_.nj() - 1))},
+                      static_cast<double>(grid_.nx() - 1))},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
@@ -69,7 +72,7 @@ class CavityFlowSimulator {
       grid_ = params.grid_shape;
       ux_ = params.wall_velocity;
       tau_ = calc_tau(params.reynolds_number, params.wall_velocity,
-                      static_cast<double>(grid_.nj() - 1));
+                      static_cast<double>(grid_.nx() - 1));
       error_limit_ = params.error_limit;
       print_freq_ = params.print_frequency;
       max_iter_ = params.max_iter;
@@ -170,17 +173,19 @@ class CavityFlowSimulator {
   void propagation_process(Eigen::MatrixBase<T1>& f,
                            Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
-    for (int i = 1; i < grid_.ni() - 1; ++i) {
-      for (int j = 1; j < grid_.nj() - 1; ++j) {
+    for (int j = 1; j < grid_.ny() - 1; ++j) {
+      for (int i = 1; i < grid_.nx() - 1; ++i) {
         const auto n = grid_.index(i, j);
-        f(1, grid_.index(i, j + 1)) = fold(1, n);
-        f(2, grid_.index(i + 1, j)) = fold(2, n);
-        f(3, grid_.index(i, j - 1)) = fold(3, n);
-        f(4, grid_.index(i - 1, j)) = fold(4, n);
+        // clang-format off
+        f(1, grid_.index(i + 1, j    )) = fold(1, n);
+        f(2, grid_.index(i,     j + 1)) = fold(2, n);
+        f(3, grid_.index(i - 1, j    )) = fold(3, n);
+        f(4, grid_.index(i    , j - 1)) = fold(4, n);
         f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
-        f(6, grid_.index(i + 1, j - 1)) = fold(6, n);
+        f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
         f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
-        f(8, grid_.index(i - 1, j + 1)) = fold(8, n);
+        f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
+        // clang-format on
       }
     }
   }
@@ -188,66 +193,66 @@ class CavityFlowSimulator {
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Half-way bounce-back condition
-    const auto right = grid_.nj() - 1;
-    const auto top = grid_.ni() - 1;
+    const auto right = grid_.nx() - 1;
+    const auto top = grid_.ny() - 1;
     // Left boundary
-    for (int i = 1; i < grid_.ni() - 1; ++i) {
-      const auto n = grid_.index(i, 1);
-      f(1, n) = f(3, grid_.index(i, 0));
-      f(5, n) = f(7, grid_.index(i - 1, 0));
-      f(8, n) = f(6, grid_.index(i + 1, 0));
+    for (int j = 1; j < grid_.ny() - 1; ++j) {
+      const auto n = grid_.index(1, j);
+      f(1, n) = f(3, grid_.index(0, j));
+      f(5, n) = f(7, grid_.index(0, j - 1));
+      f(8, n) = f(6, grid_.index(0, j + 1));
     }
     // Right boundary
-    for (int i = 1; i < grid_.ni() - 1; ++i) {
-      const auto n = grid_.index(i, right - 1);
-      f(3, n) = f(1, grid_.index(i, right));
-      f(6, n) = f(8, grid_.index(i + 1, right));
-      f(7, n) = f(5, grid_.index(i - 1, right));
+    for (int j = 1; j < grid_.ny() - 1; ++j) {
+      const auto n = grid_.index(right - 1, j);
+      f(3, n) = f(1, grid_.index(right, j));
+      f(6, n) = f(8, grid_.index(right, j - 1));
+      f(7, n) = f(5, grid_.index(right, j + 1));
     }
     // Bottom boundary
-    for (int j = 1; j < grid_.nj() - 1; ++j) {
-      const auto n = grid_.index(1, j);
-      f(2, n) = f(4, grid_.index(0, j));
-      f(5, n) = f(7, grid_.index(0, j - 1));
-      f(6, n) = f(8, grid_.index(0, j + 1));
+    for (int i = 1; i < grid_.nx() - 1; ++i) {
+      const auto n = grid_.index(i, 1);
+      f(2, n) = f(4, grid_.index(i, 0));
+      f(5, n) = f(7, grid_.index(i - 1, 0));
+      f(6, n) = f(8, grid_.index(i + 1, 0));
     }
     // Top boundary
-    for (int j = 1; j < grid_.nj() - 1; ++j) {
-      const auto n = grid_.index(top - 1, j);
-      const auto m = grid_.index(top, j);
+    for (int i = 1; i < grid_.nx() - 1; ++i) {
+      const auto n = grid_.index(i, top - 1);
+      const auto m = grid_.index(i, top);
       const auto rho =
           f(0, m) + f(1, m) + f(3, m) + 2.0 * (f(2, m) + f(5, m) + f(6, m));
-      f(4, n) = f(2, grid_.index(top, j));
-      f(7, n) = f(5, grid_.index(top, j + 1)) - rho * ux_ / 6.0;
-      f(8, n) = f(6, grid_.index(top, j - 1)) + rho * ux_ / 6.0;
+      f(4, n) = f(2, grid_.index(i, top));
+      f(7, n) = f(5, grid_.index(i + 1, top)) - rho * ux_ / 6.0;
+      f(8, n) = f(6, grid_.index(i - 1, top)) + rho * ux_ / 6.0;
     }
-    // Bounce back from corner points
-    // f is calculated by using the equation for feq with density = 1.
-    const auto u2 = ux_ * ux_;
-    {
-      const auto cu = c_.col(5).dot(Eigen::Vector2d(ux_, 0.0));
-      f(5, grid_.index(top - 1, right - 1)) =
-          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
-    }
-    {
-      const auto cu = c_.col(7).dot(Eigen::Vector2d(ux_, 0.0));
-      f(7, grid_.index(top - 1, right - 1)) =
-          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
-    }
-    {
-      const auto cu = c_.col(6).dot(Eigen::Vector2d(ux_, 0.0));
-      f(6, grid_.index(top - 1, 1)) =
-          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
-    }
-    {
-      const auto cu = c_.col(8).dot(Eigen::Vector2d(ux_, 0.0));
-      f(8, grid_.index(top - 1, 1)) =
-          (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2) / 36.0;
-    }
-    f(6, grid_.index(1, top - 1)) = 1.0 / 36.0;
-    f(8, grid_.index(1, top - 1)) = 1.0 / 36.0;
-    f(5, grid_.index(1, 1)) = 1.0 / 36.0;
-    f(7, grid_.index(1, 1)) = 1.0 / 36.0;
+    // // Corner points
+    // // f is calculated by using the equation for feq with density = 1.
+    // const auto u2 = ux_ * ux_;
+    // {
+    //   const auto cu = c_.col(6).dot(Eigen::Vector2d(ux_, 0.0));
+    //   f(6, grid_.index(right - 1, top - 1)) =
+    //       w_(6) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+    // }
+    // {
+    //   const auto cu = c_.col(8).dot(Eigen::Vector2d(ux_, 0.0));
+    //   f(8, grid_.index(right - 1, top - 1)) =
+    //       w_(8) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+    // }
+    // {
+    //   const auto cu = c_.col(5).dot(Eigen::Vector2d(ux_, 0.0));
+    //   f(5, grid_.index(1, top - 1)) =
+    //       w_(5) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+    // }
+    // {
+    //   const auto cu = c_.col(7).dot(Eigen::Vector2d(ux_, 0.0));
+    //   f(7, grid_.index(1, top - 1)) =
+    //       w_(7) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+    // }
+    // f(6, grid_.index(1, 1)) = w_(6);
+    // f(8, grid_.index(1, 1)) = w_(8);
+    // f(5, grid_.index(right - 1, 1)) = w_(5);
+    // f(7, grid_.index(right - 1, 1)) = w_(7);
   }
 
   template <typename T1, typename T2, typename T3>
@@ -264,11 +269,11 @@ class CavityFlowSimulator {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), grid_.nj(), grid_.ni(),
-        Stride<Dynamic, 2>(grid_.nj() * 2, 2));
+        &u(0, 0), grid_.nx(), grid_.ny(),
+        Stride<Dynamic, 2>(grid_.nx() * 2, 2));
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> uy(
-        &u(1, 0), grid_.nj(), grid_.ni(),
-        Stride<Dynamic, 2>(grid_.nj() * 2, 2));
+        &u(1, 0), grid_.nx(), grid_.ny(),
+        Stride<Dynamic, 2>(grid_.nx() * 2, 2));
     writer_.write(ux.transpose(), "ux.txt");
     writer_.write(uy.transpose(), "uy.txt");
   }

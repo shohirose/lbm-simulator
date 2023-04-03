@@ -178,49 +178,57 @@ class PoiseuilleFlowSimulator {
   void propagation_process(Eigen::MatrixBase<T1>& f,
                            Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
-    for (int j = 0; j < grid_.nj(); ++j) {
-      const auto n = grid_.index(bottom, j);
-      f(1, grid_.periodic_index(0, j + 1)) = fold(1, n);
-      f(2, grid_.periodic_index(1, j)) = fold(2, n);
-      f(3, grid_.periodic_index(0, j - 1)) = fold(3, n);
-      f(5, grid_.periodic_index(1, j + 1)) = fold(5, n);
-      f(6, grid_.periodic_index(1, j - 1)) = fold(6, n);
+    for (int i = 0; i < grid_.nx(); ++i) {
+      const auto n = grid_.index(i, 0);
+      // clang-format off
+      f(1, grid_.periodic_index(i + 1, 0)) = fold(1, n);
+      f(2, grid_.periodic_index(i    , 1)) = fold(2, n);
+      f(3, grid_.periodic_index(i - 1, 0)) = fold(3, n);
+      f(5, grid_.periodic_index(i + 1, 1)) = fold(5, n);
+      f(6, grid_.periodic_index(i - 1, 1)) = fold(6, n);
+      // clang-format on
     }
-    for (int i = 1; i < grid_.ni() - 1; ++i) {
-      for (int j = 0; j < grid_.nj(); ++j) {
+    for (int j = 1; j < grid_.ny() - 1; ++j) {
+      for (int i = 0; i < grid_.nx(); ++i) {
         const auto n = grid_.index(i, j);
-        f(1, grid_.periodic_index(i, j + 1)) = fold(1, n);
-        f(2, grid_.periodic_index(i + 1, j)) = fold(2, n);
-        f(3, grid_.periodic_index(i, j - 1)) = fold(3, n);
-        f(4, grid_.periodic_index(i - 1, j)) = fold(4, n);
+        // clang-format off
+        f(1, grid_.periodic_index(i + 1, j    )) = fold(1, n);
+        f(2, grid_.periodic_index(i    , j + 1)) = fold(2, n);
+        f(3, grid_.periodic_index(i - 1, j    )) = fold(3, n);
+        f(4, grid_.periodic_index(i    , j - 1)) = fold(4, n);
         f(5, grid_.periodic_index(i + 1, j + 1)) = fold(5, n);
-        f(6, grid_.periodic_index(i + 1, j - 1)) = fold(6, n);
+        f(6, grid_.periodic_index(i - 1, j + 1)) = fold(6, n);
         f(7, grid_.periodic_index(i - 1, j - 1)) = fold(7, n);
-        f(8, grid_.periodic_index(i - 1, j + 1)) = fold(8, n);
+        f(8, grid_.periodic_index(i + 1, j - 1)) = fold(8, n);
+        // clang-format on
       }
     }
-    for (int j = 0; j < grid_.nj(); ++j) {
-      const auto n = grid_.index(top, j);
-      f(1, grid_.periodic_index(grid_.ni() - 1, j + 1)) = fold(1, n);
-      f(3, grid_.periodic_index(grid_.ni() - 1, j - 1)) = fold(3, n);
-      f(4, grid_.periodic_index(grid_.ni() - 2, j)) = fold(4, n);
-      f(7, grid_.periodic_index(grid_.ni() - 2, j - 1)) = fold(7, n);
-      f(8, grid_.periodic_index(grid_.ni() - 2, j + 1)) = fold(8, n);
+    const auto top = grid_.ny() - 1;
+    for (int i = 0; i < grid_.nx() - 1; ++i) {
+      const auto n = grid_.index(i, top);
+      // clang-format off
+      f(1, grid_.periodic_index(i + 1, top    )) = fold(1, n);
+      f(3, grid_.periodic_index(i - 1, top    )) = fold(3, n);
+      f(4, grid_.periodic_index(i    , top - 1)) = fold(4, n);
+      f(7, grid_.periodic_index(i - 1, top - 1)) = fold(7, n);
+      f(8, grid_.periodic_index(i + 1, top - 1)) = fold(8, n);
+      // clang-format on
     }
   }
 
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     // Bounce-back condition for bottom boundary
-    for (int j = 0; j < grid_.nj(); ++j) {
-      const auto n = grid_.index(bottom, j);
+    for (int i = 0; i < grid_.nx(); ++i) {
+      const auto n = grid_.index(i, 0);
       f(2, n) = f(4, n);
       f(5, n) = f(7, n);
       f(6, n) = f(8, n);
     }
     // Bounce-back condition for top boundary
-    for (int j = 0; j < grid_.nj(); ++j) {
-      const auto n = grid_.index(top, j);
+    const auto top = grid_.ny() - 1;
+    for (int i = 0; i < grid_.nx(); ++i) {
+      const auto n = grid_.index(i, top);
       f(4, n) = f(2, n);
       f(7, n) = f(5, n);
       f(8, n) = f(6, n);
@@ -241,9 +249,9 @@ class PoiseuilleFlowSimulator {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), grid_.nj(), grid_.ni(),
-        Stride<Dynamic, 2>(grid_.nj() * 2, 2));
-    writer_.write(ux.transpose().col(grid_.nj() / 2), "ux.txt");
+        &u(0, 0), grid_.nx(), grid_.ny(),
+        Stride<Dynamic, 2>(grid_.nx() * 2, 2));
+    writer_.write(ux.transpose().col(grid_.nx() / 2), "ux.txt");
   }
 
   CartesianGrid2d grid_;

@@ -6,63 +6,6 @@
 
 namespace lbm {
 
-class TopBoundary {};
-class BottomBoundary {};
-class LeftBoundary {};
-class RightBoundary {};
-
-template <typename Boundary>
-struct is_top_or_bottom_boundary {
-  static constexpr auto value = std::is_same_v<Boundary, TopBoundary> ||
-                                std::is_same_v<Boundary, BottomBoundary>;
-};
-
-template <typename Boundary>
-inline constexpr auto is_top_or_bottom_boundary_v =
-    is_top_or_bottom_boundary<Boundary>::value;
-
-template <typename Boundary>
-struct is_left_or_right_boundary {
-  static constexpr auto value = std::is_same_v<Boundary, LeftBoundary> ||
-                                std::is_same_v<Boundary, RightBoundary>;
-};
-
-template <typename Boundary>
-inline constexpr auto is_left_or_right_boundary_v =
-    is_left_or_right_boundary<Boundary>::value;
-
-static constexpr auto top = TopBoundary{};
-static constexpr auto bottom = BottomBoundary{};
-static constexpr auto left = LeftBoundary{};
-static constexpr auto right = RightBoundary{};
-
-namespace detail {
-
-template <typename Boundary>
-struct boundary_index_impl {};
-
-template <>
-struct boundary_index_impl<TopBoundary> {
-  static int eval(int j, int ni, int nj) noexcept { return (ni - 1) * nj + j; }
-};
-
-template <>
-struct boundary_index_impl<BottomBoundary> {
-  static int eval(int j, int ni, int nj) noexcept { return j; }
-};
-
-template <>
-struct boundary_index_impl<LeftBoundary> {
-  static int eval(int i, int ni, int nj) noexcept { return i * nj; }
-};
-
-template <>
-struct boundary_index_impl<RightBoundary> {
-  static int eval(int i, int ni, int nj) noexcept { return i * nj + nj - 1; }
-};
-
-}  // namespace detail
-
 class CartesianGrid2d {
  public:
   CartesianGrid2d() = default;
@@ -70,15 +13,15 @@ class CartesianGrid2d {
   /**
    * @brief Construct a new Cartesian Grid 2d object
    *
-   * @param ni Number of cells in I direction
-   * @param nj Number of cells in J direction
+   * @param nx Number of cells in the x direction
+   * @param ny Number of cells in the y direction
    */
-  CartesianGrid2d(int ni, int nj) : shape_{ni, nj} {}
+  CartesianGrid2d(int nx, int ny) : shape_{nx, ny} {}
 
   /**
    * @brief Construct a new Cartesian Grid 2d object
    *
-   * @param shape Shape of grid: (ni, nj)
+   * @param shape Shape of grid: (nx, ny)
    */
   CartesianGrid2d(const std::array<int, 2>& shape) : shape_{shape} {}
 
@@ -88,57 +31,29 @@ class CartesianGrid2d {
   /**
    * @brief Return the number of cells in the given direction
    *
-   * @param i Direction. I = 0, J = 1.
+   * @param i Direction. X = 0, Y = 1.
    */
   int shape(int i) const noexcept {
     assert(i >= 0 && i < shape_.size() && "out of bounds error!");
     return shape_[i];
   }
 
-  int ni() const noexcept { return this->shape(0); }
+  int nx() const noexcept { return this->shape(0); }
 
-  int nj() const noexcept { return this->shape(1); }
+  int ny() const noexcept { return this->shape(1); }
 
   const auto& shape() const noexcept { return shape_; }
 
   /**
-   * @brief Return the cell index of a given I and J.
+   * @brief Return the cell index.
    *
-   * @param i Index in the I direction
-   * @param j Index in the J direction
+   * @param i Index in the x direction
+   * @param j Index in the y direction
    */
   int index(int i, int j) const noexcept {
-    assert(i >= 0 && i <= shape_[0] && "out of bounds error!");
-    assert(j >= 0 && j <= shape_[1] && "out of bounds error!");
-    return i * shape_[1] + j;
-  }
-
-  /**
-   * @brief Return the cell index along either top or bottom boundaries.
-   *
-   * @tparam Boundary TopBoundary or BottomBoundary
-   * @param boundary lbm::top or lbm::bottom
-   * @param j Index in the J direction
-   */
-  template <typename Boundary,
-            std::enable_if_t<is_top_or_bottom_boundary_v<Boundary>,
-                             std::nullptr_t> = nullptr>
-  int index(Boundary boundary, int j) const noexcept {
-    return detail::boundary_index_impl<Boundary>::eval(j, shape_[0], shape_[1]);
-  }
-
-  /**
-   * @brief Return the cell index along either left or right boundaries.
-   *
-   * @tparam Boundary LeftBoundary or RightBoundary
-   * @param i Index in the I direction
-   * @param boundary lbm::left or lbm::right
-   */
-  template <typename Boundary,
-            std::enable_if_t<is_left_or_right_boundary_v<Boundary>,
-                             std::nullptr_t> = nullptr>
-  int index(int i, Boundary boundary) const noexcept {
-    return detail::boundary_index_impl<Boundary>::eval(i, shape_[0], shape_[1]);
+    assert(i >= 0 && i < shape_[0] && "Error: out of bounds!");
+    assert(j >= 0 && j < shape_[1] && "Error: out of bounds!");
+    return i + j * shape_[0];
   }
 
   /**
@@ -147,8 +62,8 @@ class CartesianGrid2d {
    * If i or j exceeds its bounds, either ni or nj is added or subtracted to fit
    * in the bounds.
    *
-   * @param i Index in the I direction
-   * @param j Index in the J direction
+   * @param i Index in the x direction
+   * @param j Index in the y direction
    */
   int periodic_index(int i, int j) const noexcept {
     if (i < 0) {
