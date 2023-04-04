@@ -26,7 +26,7 @@ $ ./build/lbm-simulator cavity -f data/cavity.json
 JSON files under the `data` directory are input files for each simulator.
 An example of the input JSON file for the `poiseuille` simulator is:
 
-```yaml:./data/poiseuille.json
+```yaml
 {
     // Number of grids
     "gridShape": [
@@ -51,7 +51,7 @@ An example of the input JSON file for the `poiseuille` simulator is:
 
 That for the `cavity` simulator is:
 
-```yaml:./data/cavity.json
+```yaml
 {
     "gridShape": [
         52,
