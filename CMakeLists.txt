@@ -48,8 +48,8 @@ INTERFACE
 )
 target_link_libraries(lbm
 INTERFACE
-    eigen
-    fmt
+    Eigen3::Eigen
+    fmt::fmt
     nlohmann_json::nlohmann_json
 )
 target_include_directories(lbm
@@ -64,7 +64,7 @@ add_executable(lbm-simulator
 target_link_libraries(lbm-simulator
 PRIVATE
     lbm
-    CLI11
+    CLI11::CLI11
 )
 
 # ------------ Benchmark Tests -------------
