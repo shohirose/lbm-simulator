@@ -153,19 +153,19 @@ class PoiseuilleFlowSimulator {
   void calc_equilibrium_distribution_function(
       Eigen::MatrixBase<T1>& feq, const Eigen::MatrixBase<T2>& u,
       const Eigen::MatrixBase<T3>& rho) const noexcept {
+    const Eigen::VectorXd u2 = u.colwise().squaredNorm().transpose();
     for (int i = 0; i < feq.cols(); ++i) {
-      const auto u2 = u.col(i).squaredNorm();
-      for (int k = 0; k < 9; ++k) {
-        const auto cu = c_.col(k).dot(u.col(i));
-        feq(k, i) =
-            w_(k) * rho(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
+      const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u.col(i);
+      feq.col(i) =
+          (rho(i) * w_.array() *
+           (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() - 1.5 * u2(i)))
+              .matrix();
     }
   }
 
   template <typename T1, typename T2>
   void run_collision_process(Eigen::MatrixBase<T1>& f,
-                         const Eigen::MatrixBase<T2>& feq) const noexcept {
+                             const Eigen::MatrixBase<T2>& feq) const noexcept {
     f = f - (f - feq) / tau_;
   }
 
@@ -177,7 +177,7 @@ class PoiseuilleFlowSimulator {
 
   template <typename T1, typename T2>
   void run_propagation_process(Eigen::MatrixBase<T1>& f,
-                           Eigen::MatrixBase<T2>& fold) const noexcept {
+                               Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
     for (int i = 0; i < grid_.nx(); ++i) {
       const auto n = grid_.index(i, 0);

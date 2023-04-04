@@ -113,7 +113,6 @@ class CavityFlowSimulator {
       this->apply_boundary_condition(f);
       calc_density(rho, f);
       this->calc_velocity(u, rho, f);
-      
 
       eps = (u - u0).colwise().norm().maxCoeff();
       u0 = u;
@@ -155,13 +154,13 @@ class CavityFlowSimulator {
   void calc_equilibrium_distribution_function(
       Eigen::MatrixBase<T1>& feq, const Eigen::MatrixBase<T2>& u,
       const Eigen::MatrixBase<T3>& rho) const noexcept {
+    const Eigen::VectorXd u2 = u.colwise().squaredNorm().transpose();
     for (int i = 0; i < feq.cols(); ++i) {
-      const auto u2 = u.col(i).squaredNorm();
-      for (int k = 0; k < 9; ++k) {
-        const auto cu = c_.col(k).dot(u.col(i));
-        feq(k, i) =
-            w_(k) * rho(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
+      const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u.col(i);
+      feq.col(i) =
+          (rho(i) * w_.array() *
+           (1.0 + 3.0 * cu.array() + 4.5 * cu.array().square() - 1.5 * u2(i)))
+              .matrix();
     }
   }
 
