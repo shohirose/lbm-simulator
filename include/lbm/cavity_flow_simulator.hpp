@@ -8,6 +8,7 @@
 
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
+#include "lbm/lattice.hpp"
 
 namespace lbm {
 
@@ -31,23 +32,15 @@ class CavityFlowSimulator {
    */
   CavityFlowSimulator(const CavityFlowParameters& params)
       : grid_{params.grid_shape},
-        c_{},
-        w_{},
+        c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
+        w_{Lattice<LatticeType::D2Q9>::get_weight()},
         ux_{params.wall_velocity},
         tau_{calc_relaxation_time(params.reynolds_number, params.wall_velocity,
                                   static_cast<double>(grid_.nx() - 1))},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
-        writer_{params.output_directory} {
-    // clang-format off
-    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1;
-    w_ << 4.0 / 9.0,
-          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
-          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
-    // clang-format on
-  }
+        writer_{params.output_directory} {}
 
   /**
    * @brief Run a simulation.
