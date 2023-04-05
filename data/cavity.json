@@ -5,8 +5,8 @@
     ],
     "wallVelocity": 0.1,
     "reynoldsNumber": 100,
-    "errorLimit": 1e-10,
-    "printFrequency": 10000,
-    "maxIteration": 50000,
+    "errorLimit": 1e-6,
+    "printFrequency": 2000,
+    "maxIteration": 20000,
     "outputDirectory": "./result/cavity"
 }
