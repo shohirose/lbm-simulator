@@ -24,7 +24,7 @@ struct PoiseuilleFlowParameters {
 class PoiseuilleFlowSimulator {
  public:
   /**
-   * @brief Construct a new Poiseuille Flow Simulator object
+   * @brief Construct a new PoiseuilleFlowSimulator object
    *
    * @param params Parameters
    * @throw std::filesystem::filesystem_error
@@ -39,7 +39,16 @@ class PoiseuilleFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory} {
-    this->setup(params.external_force);
+    // clang-format off
+    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1;
+    w_ << 4.0 / 9.0,
+          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
+          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
+    // clang-format on
+
+    Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
+    g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
 
   /**
@@ -99,19 +108,6 @@ class PoiseuilleFlowSimulator {
   }
 
  private:
-  void setup(const std::array<double, 2>& external_force) noexcept {
-    // clang-format off
-    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1;
-    w_ << 4.0 / 9.0,
-          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
-          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
-    // clang-format on
-
-    Eigen::Map<const Eigen::Vector2d> g(external_force.data());
-    g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
-  }
-
   template <typename T1, typename T2, typename T3>
   void calc_equilibrium_distribution_function(
       Eigen::MatrixBase<T1>& feq, const Eigen::MatrixBase<T2>& u,

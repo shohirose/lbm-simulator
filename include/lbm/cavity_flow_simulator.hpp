@@ -34,13 +34,19 @@ class CavityFlowSimulator {
         c_{},
         w_{},
         ux_{params.wall_velocity},
-        tau_{calc_tau(params.reynolds_number, params.wall_velocity,
-                      static_cast<double>(grid_.nx() - 1))},
+        tau_{calc_relaxation_time(params.reynolds_number, params.wall_velocity,
+                                  static_cast<double>(grid_.nx() - 1))},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory} {
-    this->setup();
+    // clang-format off
+    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1;
+    w_ << 4.0 / 9.0,
+          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
+          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
+    // clang-format on
   }
 
   /**
@@ -99,19 +105,11 @@ class CavityFlowSimulator {
   }
 
  private:
-  static double calc_tau(double Re, double U, double L) noexcept {
-    const auto nu = U * L / Re;
+  static double calc_relaxation_time(double reynolds_number, double velocity,
+                                     double length) noexcept {
+    // dynamic viscosity
+    const auto nu = velocity * length / reynolds_number;
     return 3.0 * nu + 0.5;
-  }
-
-  void setup() noexcept {
-    // clang-format off
-    c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1;
-    w_ << 4.0 / 9.0,
-          1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,  1.0 / 9.0,
-          1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0, 1.0 / 36.0;
-    // clang-format on
   }
 
   template <typename T1, typename T2, typename T3>
