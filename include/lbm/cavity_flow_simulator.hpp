@@ -4,7 +4,6 @@
 #include <array>
 #include <cassert>
 #include <chrono>
-#include <nlohmann/json.hpp>
 #include <string>
 
 #include "lbm/cartesian_grid_2d.hpp"
@@ -22,21 +21,14 @@ struct CavityFlowParameters {
   std::string output_directory;
 };
 
-/**
- * @brief Conversion function from json to CavityFlowParameter
- */
-void from_json(const nlohmann::json& j, CavityFlowParameters& params) {
-  j.at("gridShape").get_to(params.grid_shape);
-  j.at("wallVelocity").get_to(params.wall_velocity);
-  j.at("reynoldsNumber").get_to(params.reynolds_number);
-  j.at("errorLimit").get_to(params.error_limit);
-  j.at("printFrequency").get_to(params.print_frequency);
-  j.at("maxIteration").get_to(params.max_iter);
-  j.at("outputDirectory").get_to(params.output_directory);
-}
-
 class CavityFlowSimulator {
  public:
+  /**
+   * @brief Construct a new CavityFlowSimulator object
+   *
+   * @param params Parameters
+   * @throw std::filesystem::filesystem_error
+   */
   CavityFlowSimulator(const CavityFlowParameters& params)
       : grid_{params.grid_shape},
         c_{},
@@ -51,40 +43,12 @@ class CavityFlowSimulator {
     this->setup();
   }
 
-  CavityFlowSimulator(const std::filesystem::path& p)
-      : grid_{},
-        c_{},
-        w_{},
-        ux_{},
-        tau_{},
-        error_limit_{},
-        print_freq_{},
-        max_iter_{},
-        writer_{} {
-    std::ifstream file(p.string());
-    if (!file) {
-      fmt::print(stderr, "Error: could not open a file: {}", p.string());
-      std::exit(EXIT_FAILURE);
-    }
-    try {
-      const auto j = nlohmann::json::parse(file);
-      const auto params = j.get<CavityFlowParameters>();
-      grid_ = params.grid_shape;
-      ux_ = params.wall_velocity;
-      tau_ = calc_tau(params.reynolds_number, params.wall_velocity,
-                      static_cast<double>(grid_.nx() - 1));
-      error_limit_ = params.error_limit;
-      print_freq_ = params.print_frequency;
-      max_iter_ = params.max_iter;
-      writer_.set_output_directory(params.output_directory);
-      this->setup();
-    } catch (const std::exception& e) {
-      fmt::print(stderr, "Error: could not read a JSON file: {}\n", p.string());
-      throw e;
-    }
-  }
-
-  void run() const noexcept {
+  /**
+   * @brief Run a simulation.
+   *
+   * @throw std::runtime_error
+   */
+  void run() const {
     using Eigen::MatrixXd, Eigen::VectorXd;
     using Matrix2Xd = Eigen::Matrix<double, 2, Eigen::Dynamic>;
     using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
@@ -135,12 +99,12 @@ class CavityFlowSimulator {
   }
 
  private:
-  static double calc_tau(double Re, double U, double L) {
+  static double calc_tau(double Re, double U, double L) noexcept {
     const auto nu = U * L / Re;
     return 3.0 * nu + 0.5;
   }
 
-  void setup() {
+  void setup() noexcept {
     // clang-format off
     c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
           0,  0,  1,  0, -1,  1,  1, -1, -1;
@@ -243,8 +207,16 @@ class CavityFlowSimulator {
     rho = f.colwise().sum().transpose();
   }
 
+  /**
+   * @brief Write velocity into files.
+   *
+   * Velocity components are written into text files "ux.txt" and "uy.txt".
+   *
+   * @param u Velocity
+   * @throw std::runtime_error When failed to open files to write.
+   */
   template <typename T>
-  void write_velocity(const Eigen::MatrixBase<T>& u) const noexcept {
+  void write_velocity(const Eigen::MatrixBase<T>& u) const {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(

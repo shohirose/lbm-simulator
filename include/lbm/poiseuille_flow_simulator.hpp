@@ -4,7 +4,6 @@
 #include <array>
 #include <cassert>
 #include <chrono>
-#include <nlohmann/json.hpp>
 #include <string>
 
 #include "lbm/cartesian_grid_2d.hpp"
@@ -21,16 +20,6 @@ struct PoiseuilleFlowParameters {
   int max_iter;
   std::string output_directory;
 };
-
-void from_json(const nlohmann::json& j, PoiseuilleFlowParameters& params) {
-  j.at("gridShape").get_to(params.grid_shape);
-  j.at("externalForce").get_to(params.external_force);
-  j.at("relaxationTime").get_to(params.relaxation_time);
-  j.at("errorLimit").get_to(params.error_limit);
-  j.at("printFrequency").get_to(params.print_frequency);
-  j.at("maxIteration").get_to(params.max_iter);
-  j.at("outputDirectory").get_to(params.output_directory);
-}
 
 class PoiseuilleFlowSimulator {
  public:
@@ -53,38 +42,12 @@ class PoiseuilleFlowSimulator {
     this->setup(params.external_force);
   }
 
-  PoiseuilleFlowSimulator(const std::filesystem::path& p)
-      : grid_{},
-        c_{},
-        w_{},
-        g_{},
-        tau_{},
-        error_limit_{},
-        print_freq_{},
-        max_iter_{},
-        writer_{} {
-    std::ifstream file(p.string());
-    if (!file) {
-      fmt::print(stderr, "Error: could not open a file: {}", p.string());
-      std::exit(EXIT_FAILURE);
-    }
-    try {
-      const auto j = nlohmann::json::parse(file);
-      const auto params = j.get<PoiseuilleFlowParameters>();
-      grid_ = params.grid_shape;
-      tau_ = params.relaxation_time;
-      error_limit_ = params.error_limit;
-      print_freq_ = params.print_frequency;
-      max_iter_ = params.max_iter;
-      writer_.set_output_directory(params.output_directory);
-      this->setup(params.external_force);
-    } catch (const std::exception& e) {
-      fmt::print(stderr, "Error: could not read a JSON file: {}\n", p.string());
-      throw e;
-    }
-  }
-
-  void run() const noexcept {
+  /**
+   * @brief Run a simulation.
+   *
+   * @throw std::runtime_error
+   */
+  void run() const {
     using Eigen::MatrixXd, Eigen::VectorXd;
     using Matrix2Xd = Eigen::Matrix<double, 2, Eigen::Dynamic>;
     using Matrix9Xd = Eigen::Matrix<double, 9, Eigen::Dynamic>;
@@ -136,7 +99,7 @@ class PoiseuilleFlowSimulator {
   }
 
  private:
-  void setup(const std::array<double, 2>& external_force) {
+  void setup(const std::array<double, 2>& external_force) noexcept {
     // clang-format off
     c_ << 0,  1,  0, -1,  0,  1, -1, -1,  1,
           0,  0,  1,  0, -1,  1,  1, -1, -1;
@@ -250,8 +213,16 @@ class PoiseuilleFlowSimulator {
     rho = f.colwise().sum().transpose();
   }
 
+  /**
+   * @brief Write the x component of velocity into a file.
+   *
+   * File name is "ux.txt".
+   *
+   * @param u Velocity
+   * @throw std::runtime_error When failed to open a file to write.
+   */
   template <typename T>
-  void write_velocity(const Eigen::MatrixBase<T>& u) const noexcept {
+  void write_velocity(const Eigen::MatrixBase<T>& u) const {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
         Eigen::Dynamic;
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
