@@ -42,7 +42,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, NaiveImplTest)
 
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, NaiveImplTest)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest1)
 (benchmark::State& st) {
@@ -60,7 +60,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest1)
 
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, ForLoopTest1)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest2)
 (benchmark::State& st) {
@@ -78,7 +78,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest2)
 
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, ForLoopTest2)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest1)
 (benchmark::State& st) {
@@ -97,7 +97,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest1)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest1)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest2)
 (benchmark::State& st) {
@@ -116,7 +116,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest2)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest2)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest3)
 (benchmark::State& st) {
@@ -135,7 +135,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest3)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest3)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest4)
 (benchmark::State& st) {
@@ -155,7 +155,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest4)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest4)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest5)
 (benchmark::State& st) {
@@ -176,7 +176,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest5)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest5)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest6)
 (benchmark::State& st) {
@@ -197,7 +197,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest6)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest6)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest7)
 (benchmark::State& st) {
@@ -217,7 +217,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest7)
 BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
                      EigenVectorizeTest7)
     ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
+    ->Range(64, 256 << 10);
 
 // class CellMajorLayoutFixture : public ::benchmark::Fixture {
 //  public:
