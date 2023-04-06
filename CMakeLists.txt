@@ -123,6 +123,10 @@ if (LBM_BUILD_BENCHMARKS)
             $<$<CXX_COMPILER_ID:GNU>:-Wall -Wpedantic -Wextra>
             $<$<CXX_COMPILER_ID:Clang>:-Wall -Wpedantic -Wextra>
         )
+        target_compile_features(${name}
+        PRIVATE
+            cxx_std_17
+        )
     endfunction()
     
     add_benchmark(run-feq-benchmarks
