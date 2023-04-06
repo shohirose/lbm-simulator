@@ -144,7 +144,7 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest4)
     for (int i = 0; i < feq_.cols(); ++i) {
       const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u_.col(i);
       const Eigen::Matrix<double, 9, 1> cu2 = cu.array().square().matrix();
-      for (int k = 0; i < 9; ++i) {
+      for (int k = 0; k < 9; ++k) {
         feq_(k, i) =
             rho_(i) * w_(k) * (1.0 + 3.0 * cu(k) + 4.5 * cu2(k) - 1.5 * u2(i));
       }
