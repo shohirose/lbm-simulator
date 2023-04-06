@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 
-class ComponentMajorLayoutFixture : public ::benchmark::Fixture {
+class EquilibriumDistributionFunctionFixture : public ::benchmark::Fixture {
  public:
   void SetUp(const ::benchmark::State& st) {
     // clang-format off
@@ -27,7 +27,7 @@ class ComponentMajorLayoutFixture : public ::benchmark::Fixture {
   Eigen::Matrix<double, 9, Eigen::Dynamic> feq_;
 };
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod1Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, NaiveImplTest)
 (benchmark::State& st) {
   for (auto _ : st) {
     const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
@@ -40,11 +40,11 @@ BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod1Test)
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod1Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, NaiveImplTest)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod2Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest1)
 (benchmark::State& st) {
   for (auto _ : st) {
     for (int i = 0; i < feq_.cols(); ++i) {
@@ -58,30 +58,11 @@ BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod2Test)
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod2Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, ForLoopTest1)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod3Test)
-(benchmark::State& st) {
-  for (auto _ : st) {
-    for (int i = 0; i < feq_.cols(); ++i) {
-      const Eigen::Vector2d ui = u_.col(i);
-      const auto u2 = ui.squaredNorm();
-      for (int k = 0; k < 9; ++k) {
-        const auto cu = c_.col(k).dot(ui);
-        feq_(k, i) =
-            w_(k) * rho_(i) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
-    }
-  }
-}
-
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod3Test)
-    ->RangeMultiplier(4)
-    ->Range(64, 256 << 8);
-
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod4Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, ForLoopTest2)
 (benchmark::State& st) {
   for (auto _ : st) {
     for (int i = 0; i < feq_.cols(); ++i) {
@@ -95,11 +76,11 @@ BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod4Test)
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod4Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture, ForLoopTest2)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod5Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest1)
 (benchmark::State& st) {
   for (auto _ : st) {
     const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
@@ -113,11 +94,12 @@ BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod5Test)
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod5Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest1)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod6Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest2)
 (benchmark::State& st) {
   for (auto _ : st) {
     const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
@@ -131,68 +113,109 @@ BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod6Test)
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod6Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest2)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod7Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest3)
 (benchmark::State& st) {
   for (auto _ : st) {
     const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
-    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
     for (int i = 0; i < feq_.cols(); ++i) {
+      const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u_.col(i);
+      const Eigen::Matrix<double, 9, 1> cu2 = cu.array().square().matrix();
       feq_.col(i) = (rho_(i) * w_.array() *
-                     (1.0 + 3.0 * cu.col(i).array() +
-                      4.5 * cu.col(i).array().square() - 1.5 * u2(i)))
+                     (1.0 + 3.0 * cu.array() + 4.5 * cu2.array() - 1.5 * u2(i)))
                         .matrix();
     }
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod7Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest3)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
-BENCHMARK_DEFINE_F(ComponentMajorLayoutFixture, FeqMethod8Test)
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest4)
 (benchmark::State& st) {
   for (auto _ : st) {
+    const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
     for (int i = 0; i < feq_.cols(); ++i) {
-      const Eigen::Vector2d u = u_.col(i);
-      const auto u2 = u.squaredNorm();
-      feq_(0, i) = rho_(i) * w_(0) * (1.0 - 1.5 * u2);
-      feq_(1, i) = rho_(i) * w_(1) *
-                   (1.0 + 3.0 * u.x() + 4.5 * u.x() * u.x() - 1.5 * u2);
-      feq_(2, i) = rho_(i) * w_(2) *
-                   (1.0 + 3.0 * u.y() + 4.5 * u.y() * u.y() - 1.5 * u2);
-      feq_(3, i) = rho_(i) * w_(3) *
-                   (1.0 - 3.0 * u.x() + 4.5 * u.x() * u.x() - 1.5 * u2);
-      feq_(4, i) = rho_(i) * w_(4) *
-                   (1.0 - 3.0 * u.y() + 4.5 * u.y() * u.y() - 1.5 * u2);
-      {
-        const auto cu = u.x() + u.y();
-        feq_(5, i) =
-            rho_(i) * w_(5) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
-      {
-        const auto cu = -u.x() + u.y();
-        feq_(6, i) =
-            rho_(i) * w_(6) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
-      {
-        const auto cu = -u.x() - u.y();
-        feq_(7, i) =
-            rho_(i) * w_(7) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
-      }
-      {
-        const auto cu = u.x() - u.y();
-        feq_(8, i) =
-            rho_(i) * w_(8) * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2);
+      const Eigen::Matrix<double, 9, 1> cu = c_.transpose() * u_.col(i);
+      const Eigen::Matrix<double, 9, 1> cu2 = cu.array().square().matrix();
+      for (int k = 0; i < 9; ++i) {
+        feq_(k, i) =
+            rho_(i) * w_(k) * (1.0 + 3.0 * cu(k) + 4.5 * cu2(k) - 1.5 * u2(i));
       }
     }
   }
 }
 
-BENCHMARK_REGISTER_F(ComponentMajorLayoutFixture, FeqMethod8Test)
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest4)
+    ->RangeMultiplier(4)
+    ->Range(64, 256 << 8);
+
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest5)
+(benchmark::State& st) {
+  for (auto _ : st) {
+    const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu2 =
+        cu.array().square().matrix();
+    for (int i = 0; i < feq_.cols(); ++i) {
+      for (int k = 0; k < 9; ++k) {
+        feq_(k, i) = rho_(i) * w_(k) *
+                     (1.0 + 3.0 * cu(k, i) + 4.5 * cu2(k, i) - 1.5 * u2(i));
+      }
+    }
+  }
+}
+
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest5)
+    ->RangeMultiplier(4)
+    ->Range(64, 256 << 8);
+
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest6)
+(benchmark::State& st) {
+  for (auto _ : st) {
+    const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu2 =
+        cu.array().square().matrix();
+    for (int i = 0; i < feq_.cols(); ++i) {
+      feq_.col(i) = (rho_(i) * w_.array() *
+                     (1.0 + 3.0 * cu.col(i).array() + 4.5 * cu2.col(i).array() -
+                      1.5 * u2(i)))
+                        .matrix();
+    }
+  }
+}
+
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest6)
+    ->RangeMultiplier(4)
+    ->Range(64, 256 << 8);
+
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest7)
+(benchmark::State& st) {
+  for (auto _ : st) {
+    const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu2 =
+        cu.array().square().matrix();
+    feq_ =
+        (rho_.replicate<9, 1>().array() * w_.replicate(1, feq_.cols()).array() *
+         (1.0 + 3.0 * cu.array() + 4.5 * cu2.array() -
+          1.5 * u2.replicate<9, 1>().array()))
+            .matrix();
+  }
+}
+
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest7)
     ->RangeMultiplier(4)
     ->Range(64, 256 << 8);
 
