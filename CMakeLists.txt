@@ -1,75 +1,74 @@
 cmake_minimum_required(VERSION 3.14)
 project(lbm-simulator)
 
-option(LBM_DOWNLOAD_EIGEN "Automatically download and build Eigen library." ON)
-option(LBM_DOWNLOAD_FMT "Automatically download and build fmt library." ON)
-option(LBM_DOWNLOAD_JSON "Automatically download and build nlohmann::json library." ON)
-option(LBM_DOWNLOAD_CLI11 "Automatically download and build CLI11 library." ON)
-option(LBM_DOWNLOAD_BENCHMARK "Automatically download and build Google benchmark library." ON)
-option(LBM_BUILD_BENCHMARKS "Build benchmark tests." OFF)
+# ---------------------------------- Options -----------------------------------
+option(LBM_DOWNLOAD_Eigen3
+    "Automatically download and build Eigen3 library."
+    ON
+)
+option(LBM_DOWNLOAD_fmt
+    "Automatically download and build fmt library."
+    ON
+)
+option(LBM_DOWNLOAD_nlohmann_json
+    "Automatically download and build nlohmann_json library."
+    ON
+)
+option(LBM_DOWNLOAD_CLI11
+    "Automatically download and build CLI11 library."
+    ON
+)
+option(LBM_DOWNLOAD_benchmark
+    "Automatically download and build Google benchmark library."
+    ON
+)
+option(LBM_BUILD_benchmark
+    "Build benchmark tests."
+    OFF
+)
 
+# -------------------------------- Dependencies --------------------------------
 include(FetchContent)
 
-if (LBM_DOWNLOAD_EIGEN)
-    FetchContent_Declare(
-        eigen
-        URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    )
-    list(APPEND download_libs eigen)
-else()
-    find_package(Eigen3 REQUIRED)
-endif()
-
-if (LBM_DOWNLOAD_FMT)
-    FetchContent_Declare(
-        fmt
-        URL https://github.com/fmtlib/fmt/releases/download/9.1.0/fmt-9.1.0.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    )
-    list(APPEND download_libs fmt)
-else()
-    find_package(fmt REQUIRED)
-endif()
-
-if (LBM_DOWNLOAD_JSON)
-    FetchContent_Declare(
-        nlohmann_json
-        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    )
-    list(APPEND download_libs nlohmann_json)
-else()
-    find_package(nlohmann_json REQUIRED)
-endif()
-
-if (LBM_DOWNLOAD_CLI11)
-    FetchContent_Declare(
-        cli11
-        URL https://github.com/CLIUtils/CLI11/archive/refs/tags/v2.3.2.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    )
-    list(APPEND download_libs cli11)
-else()
-    find_package(CLI11 REQUIRED)
-endif()
-
-if (LBM_BUILD_BENCHMARKS)
-    if (LBM_DOWNLOAD_BENCHMARK)
+function(download_or_find_package package_name download_url)
+    if (LBM_DOWNLOAD_${package_name})
         FetchContent_Declare(
-            benchmark
-            URL https://github.com/google/benchmark/archive/refs/tags/v1.7.1.zip
+            ${package_name}
+            URL ${download_url}
             DOWNLOAD_EXTRACT_TIMESTAMP OFF
         )
-        list(APPEND download_libs benchmark)
+        set(download_libs ${download_libs} ${package_name} PARENT_SCOPE)
     else()
-        find_package(benchmark REQUIRED)
+        find_package(${package_name} REQUIRED)
     endif()
+endfunction()
+
+download_or_find_package(Eigen3
+    https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
+)
+
+download_or_find_package(fmt
+    https://github.com/fmtlib/fmt/releases/download/9.1.0/fmt-9.1.0.zip
+)
+
+download_or_find_package(nlohmann_json
+    https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+)
+
+download_or_find_package(CLI11
+    https://github.com/CLIUtils/CLI11/archive/refs/tags/v2.3.2.zip
+)
+
+if (LBM_BUILD_benchmark)
+    download_or_find_package(benchmark
+        https://github.com/google/benchmark/archive/refs/tags/v1.7.1.zip
+    )    
     set(BENCHMARK_ENABLE_GTEST_TESTS OFF)
 endif()
 
 FetchContent_MakeAvailable(${download_libs})
 
+# ------------------------------- lbm library ----------------------------------
 add_library(lbm INTERFACE)
 target_compile_features(lbm
 INTERFACE
@@ -96,7 +95,7 @@ INTERFACE
     include
 )
 
-# ------------ Simulator ---------------
+# ---------------------------------- Simulator ---------------------------------
 add_executable(lbm-simulator
     src/lbm_simulator.cpp
 )
@@ -107,8 +106,8 @@ PRIVATE
     nlohmann_json::nlohmann_json
 )
 
-# ------------ Benchmark Tests -------------
-if (LBM_BUILD_BENCHMARKS)
+# ------------------------------- Benchmark Tests ------------------------------
+if (LBM_BUILD_benchmark)
     function(add_benchmark name)
         add_executable(${name} ${ARGN})
         target_link_libraries(${name}
