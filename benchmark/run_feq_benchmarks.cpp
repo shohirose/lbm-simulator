@@ -206,11 +206,11 @@ BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest7)
     const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
     const Eigen::Matrix<double, 9, Eigen::Dynamic> cu2 =
         cu.array().square().matrix();
-    feq_ =
-        (rho_.replicate<9, 1>().array() * w_.replicate(1, feq_.cols()).array() *
-         (1.0 + 3.0 * cu.array() + 4.5 * cu2.array() -
-          1.5 * u2.replicate<9, 1>().array()))
-            .matrix();
+    feq_ = (rho_.transpose().replicate<9, 1>().array() *
+            w_.replicate(1, feq_.cols()).array() *
+            (1.0 + 3.0 * cu.array() + 4.5 * cu2.array() -
+             1.5 * u2.replicate<9, 1>().array()))
+               .matrix();
   }
 }
 
