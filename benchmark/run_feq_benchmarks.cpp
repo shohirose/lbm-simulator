@@ -219,6 +219,25 @@ BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
     ->RangeMultiplier(4)
     ->Range(64, 256 << 10);
 
+BENCHMARK_DEFINE_F(EquilibriumDistributionFunctionFixture, EigenVectorizeTest8)
+(benchmark::State& st) {
+  for (auto _ : st) {
+    const Eigen::VectorXd u2 = u_.colwise().squaredNorm().transpose();
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu = c_.transpose() * u_;
+    const Eigen::Matrix<double, 9, Eigen::Dynamic> cu2 =
+        cu.array().square().matrix();
+    feq_ = ((w_ * rho_.transpose()).array() *
+            (1.0 + 3.0 * cu.array() + 4.5 * cu2.array() -
+             1.5 * u2.replicate<9, 1>().array()))
+               .matrix();
+  }
+}
+
+BENCHMARK_REGISTER_F(EquilibriumDistributionFunctionFixture,
+                     EigenVectorizeTest8)
+    ->RangeMultiplier(4)
+    ->Range(64, 256 << 10);
+
 // class CellMajorLayoutFixture : public ::benchmark::Fixture {
 //  public:
 //   void SetUp(const ::benchmark::State& st) {
