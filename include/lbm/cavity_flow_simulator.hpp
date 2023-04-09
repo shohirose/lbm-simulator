@@ -187,9 +187,8 @@ class CavityFlowSimulator {
   template <typename T1, typename T2, typename T3>
   void calc_velocity(Eigen::MatrixBase<T1>& u, const Eigen::MatrixBase<T2>& rho,
                      const Eigen::MatrixBase<T3>& f) const noexcept {
-    for (int i = 0; i < u.cols(); ++i) {
-      u.col(i) = (c_ * f.col(i)) / rho(i);
-    }
+    u.noalias() = c_ * f;
+    u.array() /= rho.transpose().replicate<2, 1>().array();
   }
 
   template <typename T1, typename T2>
