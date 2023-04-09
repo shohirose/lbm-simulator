@@ -71,7 +71,7 @@ class PoiseuilleFlowSimulator {
     const auto start = system_clock::now();
 
     do {
-      tsteps += 1;
+      ++tsteps;
       this->calc_equilibrium_distribution_function(feq, u, rho);
       this->run_collision_process(f, feq);
       this->add_external_force(f, rho);
@@ -98,6 +98,7 @@ class PoiseuilleFlowSimulator {
                tsteps, eps, elapsed_time);
 
     this->write_velocity(u);
+    this->write_y();
   }
 
  private:
@@ -217,6 +218,14 @@ class PoiseuilleFlowSimulator {
         &u(0, 0), grid_.nx(), grid_.ny(),
         Stride<Dynamic, 2>(grid_.nx() * 2, 2));
     writer_.write(ux.transpose().col(grid_.nx() / 2), "ux.txt");
+  }
+
+  /**
+   * @brief Write the y-coordinate of grids to a text file.
+   */
+  void write_y() const {
+    Eigen::MatrixXd y = Eigen::VectorXd::LinSpaced(grid_.ny(), 0, grid_.ny());
+    writer_.write(y, "y.txt");
   }
 
   CartesianGrid2d grid_;
