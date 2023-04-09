@@ -69,7 +69,7 @@ class CavityFlowSimulator {
     const auto start = system_clock::now();
 
     do {
-      tsteps += 1;
+      ++tsteps;
       this->calc_equilibrium_distribution_function(feq, u, rho);
       this->run_collision_process(f, feq);
       this->run_propagation_process(f, fold);
