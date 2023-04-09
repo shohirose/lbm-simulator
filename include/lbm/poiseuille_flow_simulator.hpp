@@ -203,9 +203,7 @@ class PoiseuilleFlowSimulator {
   }
 
   /**
-   * @brief Write the x component of velocity into a file.
-   *
-   * File name is "ux.txt".
+   * @brief Write the x component of velocity into "ux.txt".
    *
    * @param u Velocity
    * @throw std::runtime_error When failed to open a file to write.
@@ -221,7 +219,9 @@ class PoiseuilleFlowSimulator {
   }
 
   /**
-   * @brief Write the y-coordinate of grids to a text file.
+   * @brief Write the y coordinates into "y.txt".
+   * 
+   * @throw std::runtime_error When failed to open a file to write.
    */
   void write_y() const {
     Eigen::MatrixXd y = Eigen::VectorXd::LinSpaced(grid_.ny(), 0, grid_.ny());
