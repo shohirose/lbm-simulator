@@ -84,6 +84,9 @@ int main(int argc, char* argv[]) {
       run_simulator<PoiseuilleProblem>(filename1);
     } else if (*sub2) {
       run_simulator<CavityProblem>(filename2);
+    } else {
+      throw std::runtime_error(
+          "Error: subcommand is missing: [poiseuille, cavity]");
     }
   } catch (const std::exception& e) {
     fmt::print(stderr, "Error: {}", e.what());
