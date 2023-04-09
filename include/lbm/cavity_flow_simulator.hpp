@@ -95,6 +95,7 @@ class CavityFlowSimulator {
                tsteps, eps, elapsed_time);
 
     this->write_velocity(u);
+    this->write_xy();
   }
 
  private:
@@ -200,7 +201,7 @@ class CavityFlowSimulator {
   /**
    * @brief Write velocity into files.
    *
-   * Velocity components are written into text files "ux.txt" and "uy.txt".
+   * Velocity components are written into "ux.txt" and "uy.txt".
    *
    * @param u Velocity
    * @throw std::runtime_error When failed to open files to write.
@@ -208,15 +209,30 @@ class CavityFlowSimulator {
   template <typename T>
   void write_velocity(const Eigen::MatrixBase<T>& u) const {
     using Eigen::MatrixXd, Eigen::Map, Eigen::Stride, Eigen::Unaligned,
-        Eigen::Dynamic;
+        Eigen::Dynamic, Eigen::seqN;
+    const auto nx = grid_.nx();
+    const auto ny = grid_.ny();
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> ux(
-        &u(0, 0), grid_.nx(), grid_.ny(),
-        Stride<Dynamic, 2>(grid_.nx() * 2, 2));
+        &u(0, 0), nx, ny, Stride<Dynamic, 2>(nx * 2, 2));
     Map<const MatrixXd, Unaligned, Stride<Dynamic, 2>> uy(
-        &u(1, 0), grid_.nx(), grid_.ny(),
-        Stride<Dynamic, 2>(grid_.nx() * 2, 2));
-    writer_.write(ux.transpose(), "ux.txt");
-    writer_.write(uy.transpose(), "uy.txt");
+        &u(1, 0), nx, ny, Stride<Dynamic, 2>(nx * 2, 2));
+    writer_.write(ux(seqN(1, nx - 2), seqN(1, ny - 2)).transpose(), "ux.txt");
+    writer_.write(uy(seqN(1, nx - 2), seqN(1, ny - 2)).transpose(), "uy.txt");
+  }
+
+  /**
+   * @brief Write the x and y coordinates into "x.txt" and "y.txt".
+   * 
+   * @throw std::runtime_error When failed to open files to write.
+   */
+  void write_xy() const {
+    using Eigen::VectorXd, Eigen::MatrixXd;
+    const auto nx = grid_.nx();
+    const auto ny = grid_.ny();
+    const VectorXd x = VectorXd::LinSpaced(nx - 2, 0.5, nx - 2.5);
+    const VectorXd y = VectorXd::LinSpaced(ny - 2, 0.5, ny - 2.5);
+    writer_.write(x.replicate(1, ny).transpose(), "x.txt");
+    writer_.write(y.replicate(1, nx), "y.txt");
   }
 
  private:
