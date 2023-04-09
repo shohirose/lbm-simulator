@@ -2,34 +2,18 @@ cmake_minimum_required(VERSION 3.14)
 project(lbm-simulator)
 
 # ---------------------------------- Options -----------------------------------
-option(LBM_DOWNLOAD_Eigen3
-    "Automatically download and build Eigen3 library."
-    ON
-)
-option(LBM_DOWNLOAD_fmt
-    "Automatically download and build fmt library."
-    ON
-)
-option(LBM_DOWNLOAD_nlohmann_json
-    "Automatically download and build nlohmann_json library."
-    ON
-)
-option(LBM_DOWNLOAD_CLI11
-    "Automatically download and build CLI11 library."
-    ON
-)
-option(LBM_DOWNLOAD_benchmark
-    "Automatically download and build Google benchmark library."
-    ON
-)
-option(LBM_BUILD_benchmark
-    "Build benchmark tests."
-    OFF
-)
+option(LBM_DOWNLOAD_Eigen3        "Download Eigen3 library."           ON)
+option(LBM_DOWNLOAD_fmt           "Download fmt library."              ON)
+option(LBM_DOWNLOAD_nlohmann_json "Download nlohmann_json library."    ON)
+option(LBM_DOWNLOAD_CLI11         "Download CLI11 library."            ON)
+option(LBM_DOWNLOAD_benchmark     "Download Google benchmark library." ON)
+option(LBM_BUILD_benchmark        "Build benchmark tests."             OFF)
 
 # -------------------------------- Dependencies --------------------------------
 include(FetchContent)
 
+# Download a given package if its download option is enabled, otherwise find
+# the package using find_package.
 function(download_or_find_package package_name download_url)
     if (LBM_DOWNLOAD_${package_name})
         FetchContent_Declare(
