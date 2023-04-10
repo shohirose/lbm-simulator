@@ -11,6 +11,7 @@
 #include "lbm/file_writer.hpp"
 #include "lbm/lattice.hpp"
 #include "lbm/periodic_boundary.hpp"
+#include "lbm/propagator.hpp"
 
 namespace lbm {
 
@@ -42,6 +43,7 @@ class PoiseuilleFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
+        propagator_{grid_},
         south_{grid_},
         north_{grid_},
         east_west_{grid_} {
@@ -136,36 +138,7 @@ class PoiseuilleFlowSimulator {
   template <typename T1, typename T2>
   void run_propagation_process(Eigen::MatrixBase<T1>& f,
                                Eigen::MatrixBase<T2>& fold) const noexcept {
-    fold = f;
-    for (int j = 0; j < grid_.ny(); ++j) {
-      for (int i = 0; i < grid_.nx(); ++i) {
-        const auto n = grid_.index(i, j);
-        if (i + 1 < grid_.nx()) {
-          f(1, grid_.index(i + 1, j)) = fold(1, n);
-        }
-        if (j + 1 < grid_.ny()) {
-          f(2, grid_.index(i, j + 1)) = fold(2, n);
-        }
-        if (i - 1 >= 0) {
-          f(3, grid_.index(i - 1, j)) = fold(3, n);
-        }
-        if (j - 1 >= 0) {
-          f(4, grid_.index(i, j - 1)) = fold(4, n);
-        }
-        if (i + 1 < grid_.nx() && j + 1 < grid_.ny()) {
-          f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
-        }
-        if (i - 1 >= 0 && j + 1 < grid_.ny()) {
-          f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
-        }
-        if (i - 1 >= 0 && j - 1 >= 0) {
-          f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
-        }
-        if (i + 1 < grid_.nx() && j - 1 >= 0) {
-          f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
-        }
-      }
-    }
+    propagator_.apply(f, fold);
   }
 
   template <typename T>
@@ -224,6 +197,7 @@ class PoiseuilleFlowSimulator {
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
+  Propagator propagator_;
   BounceBackBoundary<OuterBoundary::South> south_;
   BounceBackBoundary<OuterBoundary::North> north_;
   PeriodicBoundary<PeriodicType::EastWest> east_west_;
