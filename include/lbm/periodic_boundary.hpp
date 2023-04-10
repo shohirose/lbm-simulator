@@ -8,31 +8,61 @@
 
 namespace lbm {
 
-struct TopBottomIndexPair {
-  int top;     ///< Cell index of top boundary
-  int bottom;  ///< Cell index of bottom boundary
-
-  TopBottomIndexPair(int top_, int bottom_) : top{top_}, bottom{bottom_} {}
+enum class PeriodicType {
+  NorthSouth,
+  EastWest,
+  TopBottom,
 };
 
-class TopBottomPeriodicBoundary {
+template <PeriodicType P>
+struct PeriodicIndexPair {};
+
+template <>
+struct PeriodicIndexPair<PeriodicType::NorthSouth> {
+  int north;
+  int south;
+
+  PeriodicIndexPair(int north_, int south_) : north{north_}, south{south_} {}
+};
+
+template <>
+struct PeriodicIndexPair<PeriodicType::EastWest> {
+  int east;
+  int west;
+
+  PeriodicIndexPair(int east_, int west_) : east{east_}, west{west_} {}
+};
+
+template <PeriodicType P>
+class PeriodicBoundary {
  public:
-  /**
-   * @brief Construct a new TopBottomPeriodicBoundary object
-   *
-   * @param cells Cell index pairs of top and bottom boundaries
-   */
-  TopBottomPeriodicBoundary(const std::vector<TopBottomIndexPair>& cells)
-      : cells_{cells} {}
+  using IndexPair = PeriodicIndexPair<P>;
 
   /**
-   * @brief Construct a new Top Bottom Periodic Boundary object
+   * @brief Construct a new PeriodicBoundary object
    *
-   * @tparam F
-   * @param f Functor to calculate cell index pairs of top and bottom boundaries
+   * @param cells Cell index pairs of periodic boundaries
    */
-  template <typename F>
-  TopBottomPeriodicBoundary(F&& f) : cells_{f()} {}
+  PeriodicBoundary(const std::vector<IndexPair>& cells) : cells_{cells} {}
+
+  /**
+   * @brief Construct a new PeriodicBoundary object
+   *
+   * @param grid Grid
+   */
+  PeriodicBoundary(const CartesianGrid2d& grid) : cells_{} {
+    if constexpr (P == PeriodicType::NorthSouth) {
+      cells_.reserve(grid.nx());
+      for (int i = 0; i < grid.nx(); ++i) {
+        cells_.emplace_back(grid.index(i, grid.ny() - 1), grid.index(i, 0));
+      }
+    } else if constexpr (P == PeriodicType::EastWest) {
+      cells_.reserve(grid.ny());
+      for (int j = 0; j < grid.ny(); ++j) {
+        cells_.emplace_back(grid.index(grid.nx() - 1, j), grid.index(0, j));
+      }
+    }
+  }
 
   /**
    * @brief Apply boundary condition
@@ -42,77 +72,34 @@ class TopBottomPeriodicBoundary {
    */
   template <typename T>
   void apply(Eigen::MatrixBase<T>& f) const noexcept {
-    for (auto [top, bottom] : top_) {
-      // clang-format off
-      // f(1, top) = f(1, bottom);
-      f(2, bottom) = f(2, top);
-      // f(3, top) = f(3, bottom);
-      f(4, top)    = f(4, bottom);
-      f(5, bottom) = f(5, top);
-      f(6, bottom) = f(6, top);
-      f(7, top)    = f(7, bottom);
-      f(8, top)    = f(8, bottom);
-      // clang-format on
+    if constexpr (P == PeriodicType::NorthSouth) {
+      for (auto [north, south] : top_) {
+        // clang-format off
+        f(2, south) = f(2, north);
+        f(4, north) = f(4, south);
+        f(5, south) = f(5, north);
+        f(6, south) = f(6, north);
+        f(7, north) = f(7, south);
+        f(8, north) = f(8, south);
+        // clang-format on
+      }
+    } else if constexpr (P == PeriodicType ::EastWest) {
+      for (auto [east, west] : cells_) {
+        // clang-format off
+        f(1, west) = f(1, east);
+        f(3, east) = f(3, west);
+        f(5, west) = f(5, east);
+        f(6, east) = f(6, west);
+        f(7, east) = f(7, west);
+        f(8, west) = f(8, east);
+        // clang-format on
+      }
     }
   }
 
  private:
   /// A list of cell index pairs of top & bottom boundaries.
-  std::vector<TopBottomIndexPair> cells_;
-};
-
-struct LeftRightIndexPair {
-  int left;   ///< Cell index of left boundary
-  int right;  ///< Cell index of right boundary
-
-  LeftRightIndexPair(int left_, int right_) : left{left_}, right{right_} {}
-};
-
-class LeftRightPeriodicBoundary {
- public:
-  /**
-   * @brief Construct a new LeftRightPeriodicBoundary object
-   *
-   * @param cells Cell indices of left and right boundaries
-   */
-  LeftRightPeriodicBoundary(const std::vector<LeftRightIndexPair>& cells)
-      : cells_{cells} {}
-
-  /**
-   * @brief Construct a new LeftRightPeriodicBoundary object
-   *
-   * @tparam F
-   * @param f Functor to calculate cell index pairs of left and right
-   * boundaries.
-   */
-  template <typename F>
-  LeftRightPeriodicBoundary(F&& f) : cells_{f()} {}
-
-  /**
-   * @brief Apply boundary condition.
-   *
-   * @tparam T
-   * @param f Distribution function
-   */
-  template <typename T>
-  void apply(Eigen::MatrixBase<T>& f) const noexcept {
-    for (auto [left, right] : cells_) {
-      // clang-format off
-      f(1, left)  = f(1, right);
-      // f(2, left) = fold(2, right);
-      f(3, right) = f(3, left);
-      // f(4, left) = fold(4, right);
-      f(5, left)  = f(5, right);
-      f(6, right) = f(6, left);
-      f(7, right) = f(7, left);
-      f(8, left)  = f(8, right);
-      // clang-format on
-    }
-  }
-
- private:
-  /// A list of cell index pairs of left & right boundaries.
-  std::vector<LeftRightIndexPair> cells_;
+  std::vector<IndexPair> cells_;
 };
 
 }  // namespace lbm

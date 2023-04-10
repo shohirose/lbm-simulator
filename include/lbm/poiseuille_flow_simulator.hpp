@@ -59,14 +59,7 @@ class PoiseuilleFlowSimulator {
           }
           return cells;
         }},
-        left_right_{[grid = grid_]() {
-          std::vector<LeftRightIndexPair> cells;
-          cells.reserve(grid.ny());
-          for (int j = 0; j < grid.ny(); ++j) {
-            cells.emplace_back(grid.index(0, j), grid.index(grid.nx() - 1, j));
-          }
-          return cells;
-        }} {
+        east_west_{grid_} {
     Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
     g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
@@ -192,7 +185,7 @@ class PoiseuilleFlowSimulator {
 
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
-    left_right_.apply(f);
+    east_west_.apply(f);
     bottom_.apply(f);
     top_.apply(f);
   }
@@ -248,7 +241,8 @@ class PoiseuilleFlowSimulator {
   FileWriter writer_;
   BounceBackBoundary<BoundaryNormal::Up> bottom_;  ///< Bottom boundary
   BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Top boundary
-  LeftRightPeriodicBoundary left_right_;           ///< Left & right boundaries
+  PeriodicBoundary<PeriodicType::EastWest>
+      east_west_;  ///< East & west boundaries
 };
 
 }  // namespace lbm
