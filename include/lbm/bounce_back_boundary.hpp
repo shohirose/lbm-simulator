@@ -71,13 +71,13 @@ class BounceBackBoundary {
         f(5, cell) = f(7, cell);
         f(6, cell) = f(8, cell);
       }
-    } else if constexpr (B == OuterBoundary::West) {
+    } else if constexpr (B == OuterBoundary::East) {
       for (auto&& cell : cells_) {
         f(3, cell) = f(1, cell);
         f(6, cell) = f(8, cell);
         f(7, cell) = f(5, cell);
       }
-    } else if constexpr (B == OuterBoundary::East) {
+    } else if constexpr (B == OuterBoundary::West) {
       for (auto&& cell : cells_) {
         f(1, cell) = f(3, cell);
         f(8, cell) = f(6, cell);
