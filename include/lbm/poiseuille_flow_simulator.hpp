@@ -10,6 +10,7 @@
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
 #include "lbm/lattice.hpp"
+#include "lbm/periodic_boundary.hpp"
 
 namespace lbm {
 
@@ -55,6 +56,14 @@ class PoiseuilleFlowSimulator {
           const auto top = grid.ny() - 1;
           for (int i = 0; i < grid.nx(); ++i) {
             cells.emplace_back(grid.index(i, top));
+          }
+          return cells;
+        }},
+        left_right_{[grid = grid_]() {
+          std::vector<LeftRightIndexPair> cells;
+          cells.reserve(grid.ny());
+          for (int j = 0; j < grid.ny(); ++j) {
+            cells.emplace_back(grid.index(0, j), grid.index(grid.nx() - 1, j));
           }
           return cells;
         }} {
@@ -150,46 +159,40 @@ class PoiseuilleFlowSimulator {
   void run_propagation_process(Eigen::MatrixBase<T1>& f,
                                Eigen::MatrixBase<T2>& fold) const noexcept {
     fold = f;
-    for (int i = 0; i < grid_.nx(); ++i) {
-      const auto n = grid_.index(i, 0);
-      // clang-format off
-      f(1, grid_.periodic_index(i + 1, 0)) = fold(1, n);
-      f(2, grid_.periodic_index(i    , 1)) = fold(2, n);
-      f(3, grid_.periodic_index(i - 1, 0)) = fold(3, n);
-      f(5, grid_.periodic_index(i + 1, 1)) = fold(5, n);
-      f(6, grid_.periodic_index(i - 1, 1)) = fold(6, n);
-      // clang-format on
-    }
-    for (int j = 1; j < grid_.ny() - 1; ++j) {
+    for (int j = 0; j < grid_.ny(); ++j) {
       for (int i = 0; i < grid_.nx(); ++i) {
         const auto n = grid_.index(i, j);
-        // clang-format off
-        f(1, grid_.periodic_index(i + 1, j    )) = fold(1, n);
-        f(2, grid_.periodic_index(i    , j + 1)) = fold(2, n);
-        f(3, grid_.periodic_index(i - 1, j    )) = fold(3, n);
-        f(4, grid_.periodic_index(i    , j - 1)) = fold(4, n);
-        f(5, grid_.periodic_index(i + 1, j + 1)) = fold(5, n);
-        f(6, grid_.periodic_index(i - 1, j + 1)) = fold(6, n);
-        f(7, grid_.periodic_index(i - 1, j - 1)) = fold(7, n);
-        f(8, grid_.periodic_index(i + 1, j - 1)) = fold(8, n);
-        // clang-format on
+        if (i + 1 < grid_.nx()) {
+          f(1, grid_.index(i + 1, j)) = fold(1, n);
+        }
+        if (j + 1 < grid_.ny()) {
+          f(2, grid_.index(i, j + 1)) = fold(2, n);
+        }
+        if (i - 1 >= 0) {
+          f(3, grid_.index(i - 1, j)) = fold(3, n);
+        }
+        if (j - 1 >= 0) {
+          f(4, grid_.index(i, j - 1)) = fold(4, n);
+        }
+        if (i + 1 < grid_.nx() && j + 1 < grid_.ny()) {
+          f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
+        }
+        if (i - 1 >= 0 && j + 1 < grid_.ny()) {
+          f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
+        }
+        if (i - 1 >= 0 && j - 1 >= 0) {
+          f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
+        }
+        if (i + 1 < grid_.nx() && j - 1 >= 0) {
+          f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
+        }
       }
-    }
-    const auto top = grid_.ny() - 1;
-    for (int i = 0; i < grid_.nx() - 1; ++i) {
-      const auto n = grid_.index(i, top);
-      // clang-format off
-      f(1, grid_.periodic_index(i + 1, top    )) = fold(1, n);
-      f(3, grid_.periodic_index(i - 1, top    )) = fold(3, n);
-      f(4, grid_.periodic_index(i    , top - 1)) = fold(4, n);
-      f(7, grid_.periodic_index(i - 1, top - 1)) = fold(7, n);
-      f(8, grid_.periodic_index(i + 1, top - 1)) = fold(8, n);
-      // clang-format on
     }
   }
 
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
+    left_right_.apply(f);
     bottom_.apply(f);
     top_.apply(f);
   }
@@ -245,6 +248,7 @@ class PoiseuilleFlowSimulator {
   FileWriter writer_;
   BounceBackBoundary<BoundaryNormal::Up> bottom_;  ///< Bottom boundary
   BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Top boundary
+  LeftRightPeriodicBoundary left_right_;           ///< Left & right boundaries
 };
 
 }  // namespace lbm
