@@ -42,23 +42,8 @@ class PoiseuilleFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
-        bottom_{[grid = grid_]() {
-          std::vector<int> cells;
-          cells.reserve(grid.nx());
-          for (int i = 0; i < grid.nx(); ++i) {
-            cells.emplace_back(grid.index(i, 0));
-          }
-          return cells;
-        }},
-        top_{[grid = grid_]() {
-          std::vector<int> cells;
-          cells.reserve(grid.nx());
-          const auto top = grid.ny() - 1;
-          for (int i = 0; i < grid.nx(); ++i) {
-            cells.emplace_back(grid.index(i, top));
-          }
-          return cells;
-        }},
+        south_{grid_},
+        north_{grid_},
         east_west_{grid_} {
     Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
     g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
@@ -186,8 +171,8 @@ class PoiseuilleFlowSimulator {
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
     east_west_.apply(f);
-    bottom_.apply(f);
-    top_.apply(f);
+    south_.apply(f);
+    north_.apply(f);
   }
 
   template <typename T1, typename T2, typename T3>
@@ -239,8 +224,8 @@ class PoiseuilleFlowSimulator {
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
-  BounceBackBoundary<BoundaryNormal::Up> bottom_;  ///< Bottom boundary
-  BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Top boundary
+  BounceBackBoundary<OuterBoundary::South> south_;
+  BounceBackBoundary<OuterBoundary::North> north_;
   PeriodicBoundary<PeriodicType::EastWest>
       east_west_;  ///< East & west boundaries
 };
