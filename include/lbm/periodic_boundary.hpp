@@ -66,7 +66,7 @@ class PeriodicBoundary {
   template <typename T>
   void apply(Eigen::MatrixBase<T>& f) const noexcept {
     if constexpr (P == PeriodicType::NorthSouth) {
-      for (auto [north, south] : top_) {
+      for (auto [north, south] : cells_) {
         // clang-format off
         f(2, south) = f(2, north);
         f(4, north) = f(4, south);
