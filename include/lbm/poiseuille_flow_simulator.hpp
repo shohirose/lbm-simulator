@@ -6,6 +6,7 @@
 #include <chrono>
 #include <string>
 
+#include "lbm/bounce_back_boundary.hpp"
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
 #include "lbm/lattice.hpp"
@@ -39,7 +40,22 @@ class PoiseuilleFlowSimulator {
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
-        writer_{params.output_directory} {
+        writer_{params.output_directory},
+        bottom_{[grid = grid_]() {
+          std::vector<IndexTuple> cells;
+          for (int i = 0; i < grid.nx(); ++i) {
+            cells.emplace_back(i, 0, grid.index(i, 0));
+          }
+          return cells;
+        }},
+        top_{[grid = grid_]() {
+          std::vector<IndexTuple> cells;
+          const auto top = grid.ny() - 1;
+          for (int i = 0; i < grid.nx(); ++i) {
+            cells.emplace_back(i, top, grid.index(i, top));
+          }
+          return cells;
+        }} {
     Eigen::Map<const Eigen::Vector2d> g(params.external_force.data());
     g_ = w_.cwiseProduct(c_.transpose() * (3.0 * g));
   }
@@ -172,21 +188,8 @@ class PoiseuilleFlowSimulator {
 
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
-    // Bounce-back condition for bottom boundary
-    for (int i = 0; i < grid_.nx(); ++i) {
-      const auto n = grid_.index(i, 0);
-      f(2, n) = f(4, n);
-      f(5, n) = f(7, n);
-      f(6, n) = f(8, n);
-    }
-    // Bounce-back condition for top boundary
-    const auto top = grid_.ny() - 1;
-    for (int i = 0; i < grid_.nx(); ++i) {
-      const auto n = grid_.index(i, top);
-      f(4, n) = f(2, n);
-      f(7, n) = f(5, n);
-      f(8, n) = f(6, n);
-    }
+    bottom_.apply(f);
+    top_.apply(f);
   }
 
   template <typename T1, typename T2, typename T3>
@@ -238,6 +241,8 @@ class PoiseuilleFlowSimulator {
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
+  BounceBackBoundary<BoundaryNormal::Up> bottom_;  ///< Bottom boundary
+  BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Bottom boundary
 };
 
 }  // namespace lbm
