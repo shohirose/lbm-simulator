@@ -220,11 +220,12 @@ class PoiseuilleFlowSimulator {
 
   /**
    * @brief Write the y coordinates into "y.txt".
-   * 
+   *
    * @throw std::runtime_error When failed to open a file to write.
    */
   void write_y() const {
-    Eigen::MatrixXd y = Eigen::VectorXd::LinSpaced(grid_.ny(), 0, grid_.ny());
+    Eigen::MatrixXd y =
+        Eigen::VectorXd::LinSpaced(grid_.ny(), 0, grid_.ny() - 1);
     writer_.write(y, "y.txt");
   }
 
