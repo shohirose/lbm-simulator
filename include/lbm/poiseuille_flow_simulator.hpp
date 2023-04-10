@@ -226,8 +226,7 @@ class PoiseuilleFlowSimulator {
   FileWriter writer_;
   BounceBackBoundary<OuterBoundary::South> south_;
   BounceBackBoundary<OuterBoundary::North> north_;
-  PeriodicBoundary<PeriodicType::EastWest>
-      east_west_;  ///< East & west boundaries
+  PeriodicBoundary<PeriodicType::EastWest> east_west_;
 };
 
 }  // namespace lbm
