@@ -244,7 +244,7 @@ class PoiseuilleFlowSimulator {
   int max_iter_;
   FileWriter writer_;
   BounceBackBoundary<BoundaryNormal::Up> bottom_;  ///< Bottom boundary
-  BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Bottom boundary
+  BounceBackBoundary<BoundaryNormal::Down> top_;   ///< Top boundary
 };
 
 }  // namespace lbm
