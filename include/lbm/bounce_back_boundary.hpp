@@ -2,7 +2,6 @@
 #define LBM_BOUNCE_BACK_BOUNDARY_HPP
 
 #include <Eigen/Core>
-#include <variant>
 #include <vector>
 
 namespace lbm {
@@ -16,25 +15,6 @@ enum class BoundaryNormal {
   Down,
   Left,
   Right,
-};
-
-/**
- * @brief Cell index tuple
- *
- */
-struct IndexTuple {
-  int i;   ///< x direction
-  int j;   ///< y direction
-  int id;  ///< cell index
-
-  /**
-   * @brief Construct a new IndexTuple object
-   *
-   * @param i_ Index in the x direction
-   * @param j_ Index in the y direction
-   * @param id_ Cell index
-   */
-  IndexTuple(int i_, int j_, int id_) : i{i_}, j{j_}, id{id_} {}
 };
 
 template <BoundaryNormal B>
@@ -61,33 +41,33 @@ class BounceBackBoundary {
   void apply(Eigen::MatrixBase<T>& f) const noexcept {
     if constexpr (B == BoundaryNormal::Up) {
       for (auto&& cell : cells_) {
-        f(2, cell.id) = f(4, cell.id);
-        f(5, cell.id) = f(7, cell.id);
-        f(6, cell.id) = f(8, cell.id);
+        f(2, cell) = f(4, cell);
+        f(5, cell) = f(7, cell);
+        f(6, cell) = f(8, cell);
       }
     } else if constexpr (B == BoundaryNormal::Down) {
       for (auto&& cell : cells_) {
-        f(4, cell.id) = f(2, cell.id);
-        f(7, cell.id) = f(5, cell.id);
-        f(8, cell.id) = f(6, cell.id);
+        f(4, cell) = f(2, cell);
+        f(7, cell) = f(5, cell);
+        f(8, cell) = f(6, cell);
       }
     } else if constexpr (B == BoundaryNormal::Left) {
       for (auto&& cell : cells_) {
-        f(3, cell.id) = f(1, cell.id);
-        f(6, cell.id) = f(8, cell.id);
-        f(7, cell.id) = f(5, cell.id);
+        f(3, cell) = f(1, cell);
+        f(6, cell) = f(8, cell);
+        f(7, cell) = f(5, cell);
       }
     } else if constexpr (B == BoundaryNormal::Right) {
       for (auto&& cell : cells_) {
-        f(1, cell.id) = f(3, cell.id);
-        f(8, cell.id) = f(6, cell.id);
-        f(5, cell.id) = f(7, cell.id);
+        f(1, cell) = f(3, cell);
+        f(8, cell) = f(6, cell);
+        f(5, cell) = f(7, cell);
       }
     }
   }
 
  private:
-  std::vector<IndexTuple> cells_;  ///< A list of cells on the boundary.
+  std::vector<int> cells_;  ///< A list of cells on the boundary.
 };
 
 }  // namespace lbm

@@ -42,17 +42,19 @@ class PoiseuilleFlowSimulator {
         max_iter_{params.max_iter},
         writer_{params.output_directory},
         bottom_{[grid = grid_]() {
-          std::vector<IndexTuple> cells;
+          std::vector<int> cells;
+          cells.reserve(grid.nx());
           for (int i = 0; i < grid.nx(); ++i) {
-            cells.emplace_back(i, 0, grid.index(i, 0));
+            cells.emplace_back(grid.index(i, 0));
           }
           return cells;
         }},
         top_{[grid = grid_]() {
-          std::vector<IndexTuple> cells;
+          std::vector<int> cells;
+          cells.reserve(grid.nx());
           const auto top = grid.ny() - 1;
           for (int i = 0; i < grid.nx(); ++i) {
-            cells.emplace_back(i, top, grid.index(i, top));
+            cells.emplace_back(grid.index(i, top));
           }
           return cells;
         }} {
