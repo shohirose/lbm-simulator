@@ -41,13 +41,6 @@ class PeriodicBoundary {
   /**
    * @brief Construct a new PeriodicBoundary object
    *
-   * @param cells Cell index pairs of periodic boundaries
-   */
-  PeriodicBoundary(const std::vector<IndexPair>& cells) : cells_{cells} {}
-
-  /**
-   * @brief Construct a new PeriodicBoundary object
-   *
    * @param grid Grid
    */
   PeriodicBoundary(const CartesianGrid2d& grid) : cells_{} {
@@ -98,7 +91,7 @@ class PeriodicBoundary {
   }
 
  private:
-  /// A list of cell index pairs of top & bottom boundaries.
+  /// A list of cell index pairs of periodic boundaries.
   std::vector<IndexPair> cells_;
 };
 
