@@ -198,8 +198,8 @@ class PoiseuilleFlowSimulator {
   int max_iter_;
   FileWriter writer_;
   Propagator propagator_;
-  BounceBackBoundary<OuterBoundary::South> south_;
-  BounceBackBoundary<OuterBoundary::North> north_;
+  BounceBackBoundary<BoundaryType::South> south_;
+  BounceBackBoundary<BoundaryType::North> north_;
   PeriodicBoundary<PeriodicType::EastWest> east_west_;
 };
 
