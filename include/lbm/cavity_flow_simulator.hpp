@@ -222,7 +222,7 @@ class CavityFlowSimulator {
 
   /**
    * @brief Write the x and y coordinates into "x.txt" and "y.txt".
-   * 
+   *
    * @throw std::runtime_error When failed to open files to write.
    */
   void write_xy() const {
@@ -231,8 +231,8 @@ class CavityFlowSimulator {
     const auto ny = grid_.ny();
     const VectorXd x = VectorXd::LinSpaced(nx - 2, 0.5, nx - 2.5);
     const VectorXd y = VectorXd::LinSpaced(ny - 2, 0.5, ny - 2.5);
-    writer_.write(x.replicate(1, ny).transpose(), "x.txt");
-    writer_.write(y.replicate(1, nx), "y.txt");
+    writer_.write(x.replicate(1, ny - 2).transpose(), "x.txt");
+    writer_.write(y.replicate(1, nx - 2), "y.txt");
   }
 
  private:
