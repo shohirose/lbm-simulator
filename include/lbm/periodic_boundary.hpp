@@ -67,25 +67,21 @@ class PeriodicBoundary {
   void apply(Eigen::MatrixBase<T>& f) const noexcept {
     if constexpr (P == PeriodicType::NorthSouth) {
       for (auto [north, south] : cells_) {
-        // clang-format off
         f(2, south) = f(2, north);
         f(4, north) = f(4, south);
         f(5, south) = f(5, north);
         f(6, south) = f(6, north);
         f(7, north) = f(7, south);
         f(8, north) = f(8, south);
-        // clang-format on
       }
     } else if constexpr (P == PeriodicType ::EastWest) {
       for (auto [east, west] : cells_) {
-        // clang-format off
         f(1, west) = f(1, east);
         f(3, east) = f(3, west);
         f(5, west) = f(5, east);
         f(6, east) = f(6, west);
         f(7, east) = f(7, west);
         f(8, west) = f(8, east);
-        // clang-format on
       }
     }
   }
