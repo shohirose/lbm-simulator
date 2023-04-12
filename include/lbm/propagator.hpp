@@ -8,61 +8,84 @@
 
 namespace lbm {
 
-struct PropagationIndexTuple {
-  int lattice_id;
-  int cell_from;
-  int cell_to;
-
-  PropagationIndexTuple(int id_, int from_, int to_)
-      : lattice_id{id_}, cell_from{from_}, cell_to{to_} {}
-};
-
-class Propagator {
+/**
+ * @brief Propagator of distribution function for all cells.
+ *
+ */
+class AllCellPropagator {
  public:
-  Propagator(const CartesianGrid2d& grid) : connections_{} {
-    connections_.reserve(grid.size() * 9);
-    for (int j = 0; j < grid.ny(); ++j) {
-      for (int i = 0; i < grid.nx(); ++i) {
-        const auto from = grid.index(i, j);
-        if (i + 1 < grid.nx()) {
-          connections_.emplace_back(1, from, grid.index(i + 1, j));
-        }
-        if (j + 1 < grid.ny()) {
-          connections_.emplace_back(2, from, grid.index(i, j + 1));
-        }
-        if (i - 1 >= 0) {
-          connections_.emplace_back(3, from, grid.index(i - 1, j));
-        }
-        if (j - 1 >= 0) {
-          connections_.emplace_back(4, from, grid.index(i, j - 1));
-        }
-        if (i + 1 < grid.nx() && j + 1 < grid.ny()) {
-          connections_.emplace_back(5, from, grid.index(i + 1, j + 1));
-        }
-        if (i - 1 >= 0 && j + 1 < grid.ny()) {
-          connections_.emplace_back(6, from, grid.index(i - 1, j + 1));
-        }
-        if (i - 1 >= 0 && j - 1 >= 0) {
-          connections_.emplace_back(7, from, grid.index(i - 1, j - 1));
-        }
-        if (i + 1 < grid.nx() && j - 1 >= 0) {
-          connections_.emplace_back(8, from, grid.index(i + 1, j - 1));
-        }
-      }
-    }
-  }
+  AllCellPropagator(const CartesianGrid2d& grid) : grid_{grid} {}
 
   template <typename T>
   void apply(Eigen::MatrixBase<T>& f,
              Eigen::MatrixBase<T>& fold) const noexcept {
     fold = f;
-    for (auto&& [k, from, to] : connections_) {
-      f(k, to) = fold(k, from);
+    for (int j = 0; j < grid_.ny(); ++j) {
+      for (int i = 0; i < grid_.nx(); ++i) {
+        const auto n = grid_.index(i, j);
+        if (i + 1 < grid_.nx()) {
+          f(1, grid_.index(i + 1, j)) = fold(1, n);
+        }
+        if (j + 1 < grid_.ny()) {
+          f(2, grid_.index(i, j + 1)) = fold(2, n);
+        }
+        if (i - 1 >= 0) {
+          f(3, grid_.index(i - 1, j)) = fold(3, n);
+        }
+        if (j - 1 >= 0) {
+          f(4, grid_.index(i, j - 1)) = fold(4, n);
+        }
+        if (i + 1 < grid_.nx() && j + 1 < grid_.ny()) {
+          f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
+        }
+        if (i - 1 >= 0 && j + 1 < grid_.ny()) {
+          f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
+        }
+        if (i - 1 >= 0 && j - 1 >= 0) {
+          f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
+        }
+        if (i + 1 < grid_.nx() && j - 1 >= 0) {
+          f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
+        }
+      }
     }
   }
 
  private:
-  std::vector<PropagationIndexTuple> connections_;
+  CartesianGrid2d grid_;
+};
+
+/**
+ * @brief Propagator of distribution function for internal cells.
+ *
+ */
+class InternalCellPropagator {
+ public:
+  InternalCellPropagator(const CartesianGrid2d& grid) : grid_{grid} {}
+
+  template <typename T>
+  void apply(Eigen::MatrixBase<T>& f,
+             Eigen::MatrixBase<T>& fold) const noexcept {
+    fold = f;
+    for (int j = 1; j < grid_.ny() - 1; ++j) {
+      for (int i = 1; i < grid_.nx() - 1; ++i) {
+        const auto n = grid_.index(i, j);
+        // clang-format off
+        f(1, grid_.index(i + 1, j    )) = fold(1, n);
+        f(2, grid_.index(i,     j + 1)) = fold(2, n);
+        f(3, grid_.index(i - 1, j    )) = fold(3, n);
+        f(4, grid_.index(i    , j - 1)) = fold(4, n);
+        f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
+        f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
+        f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
+        f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
+        // clang-format on
+      }
+    }
+  }
+
+ private:
+  CartesianGrid2d grid_;
 };
 
 }  // namespace lbm

@@ -9,6 +9,7 @@
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
 #include "lbm/lattice.hpp"
+#include "lbm/propagator.hpp"
 
 namespace lbm {
 
@@ -40,7 +41,8 @@ class CavityFlowSimulator {
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
-        writer_{params.output_directory} {}
+        writer_{params.output_directory},
+        propagator_{grid_} {}
 
   /**
    * @brief Run a simulation.
@@ -129,22 +131,7 @@ class CavityFlowSimulator {
   template <typename T1, typename T2>
   void run_propagation_process(Eigen::MatrixBase<T1>& f,
                                Eigen::MatrixBase<T2>& fold) const noexcept {
-    fold = f;
-    for (int j = 1; j < grid_.ny() - 1; ++j) {
-      for (int i = 1; i < grid_.nx() - 1; ++i) {
-        const auto n = grid_.index(i, j);
-        // clang-format off
-        f(1, grid_.index(i + 1, j    )) = fold(1, n);
-        f(2, grid_.index(i,     j + 1)) = fold(2, n);
-        f(3, grid_.index(i - 1, j    )) = fold(3, n);
-        f(4, grid_.index(i    , j - 1)) = fold(4, n);
-        f(5, grid_.index(i + 1, j + 1)) = fold(5, n);
-        f(6, grid_.index(i - 1, j + 1)) = fold(6, n);
-        f(7, grid_.index(i - 1, j - 1)) = fold(7, n);
-        f(8, grid_.index(i + 1, j - 1)) = fold(8, n);
-        // clang-format on
-      }
-    }
+    propagator_.apply(f, fold);
   }
 
   template <typename T>
@@ -245,6 +232,7 @@ class CavityFlowSimulator {
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
+  InternalCellPropagator propagator_;
 };
 
 }  // namespace lbm
