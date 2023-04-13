@@ -8,6 +8,7 @@
 
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
+#include "lbm/halfway_bounce_back_boundary.hpp"
 #include "lbm/lattice.hpp"
 #include "lbm/propagator.hpp"
 
@@ -42,7 +43,11 @@ class CavityFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
-        propagator_{grid_} {}
+        propagator_{grid_},
+        north_{grid_, {params.wall_velocity, 0}},
+        south_{grid_, {0, 0}},
+        east_{grid_, {0, 0}},
+        west_{grid_, {0, 0}} {}
 
   /**
    * @brief Run a simulation.
@@ -136,40 +141,10 @@ class CavityFlowSimulator {
 
   template <typename T>
   void apply_boundary_condition(Eigen::MatrixBase<T>& f) const noexcept {
-    // Half-way bounce-back condition
-    const auto right = grid_.nx() - 1;
-    const auto top = grid_.ny() - 1;
-    // Left boundary
-    for (int j = 1; j < grid_.ny() - 1; ++j) {
-      const auto n = grid_.index(1, j);
-      f(1, n) = f(3, grid_.index(0, j));
-      f(5, n) = f(7, grid_.index(0, j - 1));
-      f(8, n) = f(6, grid_.index(0, j + 1));
-    }
-    // Right boundary
-    for (int j = 1; j < grid_.ny() - 1; ++j) {
-      const auto n = grid_.index(right - 1, j);
-      f(3, n) = f(1, grid_.index(right, j));
-      f(6, n) = f(8, grid_.index(right, j - 1));
-      f(7, n) = f(5, grid_.index(right, j + 1));
-    }
-    // Bottom boundary
-    for (int i = 1; i < grid_.nx() - 1; ++i) {
-      const auto n = grid_.index(i, 1);
-      f(2, n) = f(4, grid_.index(i, 0));
-      f(5, n) = f(7, grid_.index(i - 1, 0));
-      f(6, n) = f(8, grid_.index(i + 1, 0));
-    }
-    // Top boundary
-    for (int i = 1; i < grid_.nx() - 1; ++i) {
-      const auto n = grid_.index(i, top - 1);
-      const auto m = grid_.index(i, top);
-      const auto rho =
-          f(0, m) + f(1, m) + f(3, m) + 2.0 * (f(2, m) + f(5, m) + f(6, m));
-      f(4, n) = f(2, grid_.index(i, top));
-      f(7, n) = f(5, grid_.index(i + 1, top)) - rho * ux_ / 6.0;
-      f(8, n) = f(6, grid_.index(i - 1, top)) + rho * ux_ / 6.0;
-    }
+    east_.apply(f);
+    west_.apply(f);
+    south_.apply(f);
+    north_.apply(f);
   }
 
   template <typename T1, typename T2, typename T3>
@@ -233,6 +208,10 @@ class CavityFlowSimulator {
   int max_iter_;
   FileWriter writer_;
   InternalCellPropagator propagator_;
+  HalfwayBounceBackBoundary<BoundaryType::North> north_;
+  HalfwayBounceBackBoundary<BoundaryType::South> south_;
+  HalfwayBounceBackBoundary<BoundaryType::East> east_;
+  HalfwayBounceBackBoundary<BoundaryType::West> west_;
 };
 
 }  // namespace lbm
