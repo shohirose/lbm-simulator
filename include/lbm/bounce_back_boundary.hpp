@@ -4,18 +4,10 @@
 #include <Eigen/Core>
 #include <vector>
 
+#include "lbm/boundary_type.hpp"
 #include "lbm/cartesian_grid_2d.hpp"
 
 namespace lbm {
-
-enum class BoundaryType {
-  North,
-  South,
-  East,
-  West,
-  Top,
-  Bottom,
-};
 
 template <BoundaryType B>
 class BounceBackBoundary {
