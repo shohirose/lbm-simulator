@@ -52,29 +52,13 @@ class BounceBackBoundary {
   template <typename T>
   void apply(Eigen::MatrixBase<T>& f) const noexcept {
     if constexpr (B == BoundaryType::North) {
-      for (auto&& cell : cells_) {
-        f(4, cell) = f(2, cell);
-        f(7, cell) = f(5, cell);
-        f(8, cell) = f(6, cell);
-      }
+      f({4, 7, 8}, cells_) = f({2, 5, 6}, cells_);
     } else if constexpr (B == BoundaryType::South) {
-      for (auto&& cell : cells_) {
-        f(2, cell) = f(4, cell);
-        f(5, cell) = f(7, cell);
-        f(6, cell) = f(8, cell);
-      }
+      f({2, 5, 6}, cells_) = f({4, 7, 8}, cells_);
     } else if constexpr (B == BoundaryType::East) {
-      for (auto&& cell : cells_) {
-        f(3, cell) = f(1, cell);
-        f(6, cell) = f(8, cell);
-        f(7, cell) = f(5, cell);
-      }
+      f({3, 6, 7}, cells_) = f({1, 8, 5}, cells_);
     } else if constexpr (B == BoundaryType::West) {
-      for (auto&& cell : cells_) {
-        f(1, cell) = f(3, cell);
-        f(8, cell) = f(6, cell);
-        f(5, cell) = f(7, cell);
-      }
+      f({1, 8, 5}, cells_) = f({3, 6, 7}, cells_);
     }
   }
 
