@@ -5,6 +5,14 @@
 
 namespace lbm {
 
+struct SingleRelaxationTimeModelParameters {
+  double tau;  ///< Relaxation time
+
+  SingleRelaxationTimeModelParameters() = default;
+  
+  SingleRelaxationTimeModelParameters(double tau_) : tau{tau_} {}
+};
+
 class SingleRelaxationTimeModel {
  public:
   /**
@@ -12,7 +20,8 @@ class SingleRelaxationTimeModel {
    *
    * @param relaxation_time Relaxation time
    */
-  SingleRelaxationTimeModel(double relaxation_time) : tau_{relaxation_time} {}
+  SingleRelaxationTimeModel(const SingleRelaxationTimeModelParameters& params)
+      : tau_{params.tau} {}
 
   template <typename T1, typename T2>
   void apply(Eigen::MatrixBase<T1>& f,
@@ -20,7 +29,7 @@ class SingleRelaxationTimeModel {
     // f = f - (f - feq)/tau_;
     const auto alpha = 1 / tau_;
     f *= 1 - alpha;
-    f.noalias() += feq *alpha;
+    f.noalias() += feq * alpha;
   }
 
  private:
