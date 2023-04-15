@@ -15,7 +15,7 @@ class HalfwayBounceBackBoundary {
  public:
   HalfwayBounceBackBoundary(const CartesianGrid2d& grid,
                             const std::array<double, 2>& u)
-      : grid_{grid}, corr_{} {
+      : grid_{grid}, u_{u[0], u[1]}, corr_{} {
     using Eigen::all, Eigen::Map, Eigen::Vector3d, Eigen::Matrix,
         Eigen::Vector2d;
     const auto c = Lattice<LatticeType::D2Q9>::get_lattice_vector();
@@ -35,8 +35,7 @@ class HalfwayBounceBackBoundary {
       ct = c(all, {3, 6, 7});
       wt = w({3, 6, 7});
     }
-    Map<const Vector2d> ut(u.data());
-    corr_ = (6 * wt.array() * (ct.transpose() * ut).array()).matrix();
+    corr_ = (6 * wt.array() * (ct.transpose() * u_).array()).matrix();
   }
 
   template <typename T>
@@ -48,7 +47,9 @@ class HalfwayBounceBackBoundary {
         const auto m1 = grid_.index(i, north);
         const auto m2 = grid_.index(i + 1, north);
         const auto m3 = grid_.index(i - 1, north);
-        const auto rho = f({0, 1, 3}, m1).sum() + 2.0 * f({2, 5, 6}, m1).sum();
+        const auto rho =
+            (f({0, 1, 3}, m1).sum() + 2.0 * f({2, 5, 6}, m1).sum()) /
+            (1 + u_.y());
         f(4, n) = f(2, m1) - rho * corr_(0);
         f(7, n) = f(5, m2) - rho * corr_(1);
         f(8, n) = f(6, m3) - rho * corr_(2);
@@ -59,7 +60,9 @@ class HalfwayBounceBackBoundary {
         const auto m1 = grid_.index(i, 0);
         const auto m2 = grid_.index(i - 1, 0);
         const auto m3 = grid_.index(i + 1, 0);
-        const auto rho = f({0, 1, 3}, m1).sum() + 2.0 * f({4, 7, 8}, m1).sum();
+        const auto rho =
+            (f({0, 1, 3}, m1).sum() + 2.0 * f({4, 7, 8}, m1).sum()) /
+            (1 - u_.y());
         f(2, n) = f(4, m1) - rho * corr_(0);
         f(5, n) = f(7, m2) - rho * corr_(1);
         f(6, n) = f(8, m3) - rho * corr_(2);
@@ -71,7 +74,9 @@ class HalfwayBounceBackBoundary {
         const auto m1 = grid_.index(east, j);
         const auto m2 = grid_.index(east, j - 1);
         const auto m3 = grid_.index(east, j + 1);
-        const auto rho = f({0, 2, 4}, m1).sum() + 2.0 * f({1, 5, 8}, m1).sum();
+        const auto rho =
+            (f({0, 2, 4}, m1).sum() + 2.0 * f({1, 5, 8}, m1).sum()) /
+            (1 + u_.x());
         f(3, n) = f(1, m1) - rho * corr_(0);
         f(6, n) = f(8, m2) - rho * corr_(1);
         f(7, n) = f(5, m3) - rho * corr_(2);
@@ -82,7 +87,9 @@ class HalfwayBounceBackBoundary {
         const auto m1 = grid_.index(0, j);
         const auto m2 = grid_.index(0, j + 1);
         const auto m3 = grid_.index(0, j - 1);
-        const auto rho = f({0, 2, 4}, m1).sum() + 2.0 * f({3, 6, 7}, m1).sum();
+        const auto rho =
+            (f({0, 2, 4}, m1).sum() + 2.0 * f({3, 6, 7}, m1).sum()) /
+            (1 - u_.x());
         f(1, n) = f(3, m1) - rho * corr_(0);
         f(8, n) = f(6, m2) - rho * corr_(1);
         f(5, n) = f(7, m3) - rho * corr_(2);
@@ -92,6 +99,7 @@ class HalfwayBounceBackBoundary {
 
  private:
   CartesianGrid2d grid_;
+  Eigen::Vector2d u_;
   Eigen::Vector3d corr_;
 };
 
