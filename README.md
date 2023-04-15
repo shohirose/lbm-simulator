@@ -5,6 +5,11 @@ This is a collection of simulators using Lattice Boltzman Method. Currently, the
 - 2-D Poiseuille flow
 - 2-D cavity flow
 
+The following collision models are implemented:
+
+- Single relaxation time (SRT) model
+- Multiple relaxation time (MRT) model
+
 # How to Build
 
 CMake is required to build programs. Please run the following commands under the root directory:
@@ -39,17 +44,31 @@ An example of the input JSON file for the `poiseuille` simulator is:
         0.00001, // X
         0.0      // Y
     ],
-    "relaxationTime": 0.56,
+    // Parameters for SRT model
+    "singleRelaxationTimeModel": {
+        "relaxationTime": 0.56
+    },
     // Criteria to end while-loops
     "errorLimit": 1e-10,
     "printFrequency": 5000,
     "maxIteration": 1000000,
-    // Directory to output result data (ux.txt)
+    // Directory to output result data (ux.txt, y.txt)
     "outputDirectory": "./result/poiseuille"
 }
 ```
 
-That for the `cavity` simulator is:
+If you want to use the MRT model, replace `singleRelaxationModel` element with
+
+```yaml
+"multipleRelaxationTimeModel": {
+    "se": 1.5,
+    "sq": 1.5,
+    "seps": 1.4,
+    "tau": 0.56,
+}
+```
+
+An example of the input JSON file for the `cavity` simulator is:
 
 ```yaml
 {
@@ -59,12 +78,15 @@ That for the `cavity` simulator is:
     ],
     // Wall velocity of the top boundary
     "wallVelocity": 0.1,
-    // Reynolds number, which is used to compute relaxation time
-    "reynoldsNumber": 100,
+    "singleRelaxationTimeModel": {
+        "relaxationTime": 0.65
+    },
     "errorLimit": 1e-10,
     "printFrequency": 10000,
     "maxIteration": 50000,
-    // Directory to output result data (ux.txt, uy.txt)
+    // Directory to output result data (ux.txt, uy.txt, x.txt, y.txt)
     "outputDirectory": "./result/cavity"
 }
 ```
+
+`multileRelaxationTimeModel` can be also used as well as in the `poiseuille` simulator.
