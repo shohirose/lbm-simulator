@@ -1,5 +1,5 @@
-#ifndef LBM_BOUNCE_BACK_BOUNDARY_HPP
-#define LBM_BOUNCE_BACK_BOUNDARY_HPP
+#ifndef LBM_ONGRID_BOUNCE_BACK_BOUNDARY_HPP
+#define LBM_ONGRID_BOUNCE_BACK_BOUNDARY_HPP
 
 #include <Eigen/Core>
 #include <vector>
@@ -10,16 +10,16 @@
 namespace lbm {
 
 template <BoundaryType B>
-class BounceBackBoundary {
+class OnGridBounceBackBoundary {
  public:
-  BounceBackBoundary() = default;
+  OnGridBounceBackBoundary() = default;
 
   /**
-   * @brief Construct a new BounceBackBoundary object
+   * @brief Construct a new OnGridBounceBackBoundary object
    *
    * @param grid Grid
    */
-  BounceBackBoundary(const CartesianGrid2d& grid) : cells_{} {
+  OnGridBounceBackBoundary(const CartesianGrid2d& grid) : cells_{} {
     if constexpr (B == BoundaryType::North) {
       cells_.reserve(grid.nx());
       for (int i = 0; i < grid.nx(); ++i) {
@@ -68,4 +68,4 @@ class BounceBackBoundary {
 
 }  // namespace lbm
 
-#endif  // LBM_BOUNCE_BACK_BOUNDARY_HPP
+#endif  // LBM_ONGRID_BOUNCE_BACK_BOUNDARY_HPP

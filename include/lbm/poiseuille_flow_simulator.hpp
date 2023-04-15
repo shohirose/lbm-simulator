@@ -6,7 +6,7 @@
 #include <chrono>
 #include <string>
 
-#include "lbm/bounce_back_boundary.hpp"
+#include "lbm/ongrid_bounce_back_boundary.hpp"
 #include "lbm/cartesian_grid_2d.hpp"
 #include "lbm/file_writer.hpp"
 #include "lbm/lattice.hpp"
@@ -204,8 +204,8 @@ class PoiseuilleFlowSimulator {
   FileWriter writer_;
   CollisionModel collision_;
   AllCellPropagator propagator_;
-  BounceBackBoundary<BoundaryType::South> south_;
-  BounceBackBoundary<BoundaryType::North> north_;
+  OnGridBounceBackBoundary<BoundaryType::South> south_;
+  OnGridBounceBackBoundary<BoundaryType::North> north_;
   PeriodicBoundary<PeriodicType::EastWest> east_west_;
 };
 
