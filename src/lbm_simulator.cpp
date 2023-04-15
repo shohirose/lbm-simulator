@@ -1,64 +1,85 @@
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
+#include <type_traits>
 
 #include "lbm/cavity_flow_simulator.hpp"
+#include "lbm/multiple_relaxation_time_model.hpp"
 #include "lbm/poiseuille_flow_simulator.hpp"
+#include "lbm/single_relaxation_time_model.hpp"
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace lbm {
 
+void from_json(const Json& j, SingleRelaxationTimeModelParameters& params) {
+  j.at("relaxationTime").get_to(params.tau);
+}
+
+void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
+  j.at("se").get_to(params.se);
+  j.at("sq").get_to(params.sq);
+  j.at("seps").get_to(params.seps);
+  j.at("tau").get_to(params.tau);
+}
+
 /**
  * @brief Conversion function from json to CavityFlowParameter
  */
-void from_json(const Json& j, CavityFlowParameters& params) {
+template <typename CollisionParameters>
+void from_json(const Json& j,
+               CavityFlowParameters<CollisionParameters>& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("wallVelocity").get_to(params.wall_velocity);
-  j.at("reynoldsNumber").get_to(params.reynolds_number);
+  // j.at("reynoldsNumber").get_to(params.reynolds_number);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
+  if constexpr (std::is_same_v<CollisionParameters,
+                               SingleRelaxationTimeModelParameters>) {
+    j.at("singleRelaxationTimeModel").get_to(params.collision_params);
+  } else if constexpr (std::is_same_v<CollisionParameters,
+                                      MultipleRelaxationTimeModelParameters>) {
+    j.at("multipleRelaxationTimeModel").get_to(params.collision_params);
+  }
 }
 
 /**
  * @brief Conversion function from json to PoiseuilleFlowParameter
  */
-void from_json(const Json& j, PoiseuilleFlowParameters& params) {
+template <typename CollisionParameters>
+void from_json(const Json& j,
+               PoiseuilleFlowParameters<CollisionParameters>& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("externalForce").get_to(params.external_force);
-  j.at("relaxationTime").get_to(params.relaxation_time);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
+  if constexpr (std::is_same_v<CollisionParameters,
+                               SingleRelaxationTimeModelParameters>) {
+    j.at("singleRelaxationTimeModel").get_to(params.collision_params);
+  } else if constexpr (std::is_same_v<CollisionParameters,
+                                      MultipleRelaxationTimeModelParameters>) {
+    j.at("multipleRelaxationTimeModel").get_to(params.collision_params);
+  }
 }
 
 }  // namespace lbm
 
-struct PoiseuilleProblem {
-  using Parameters = lbm::PoiseuilleFlowParameters;
-  using Simulator = lbm::PoiseuilleFlowSimulator;
-};
-
-struct CavityProblem {
-  using Parameters = lbm::CavityFlowParameters;
-  using Simulator = lbm::CavityFlowSimulator;
-};
-
-template <typename Problem>
-void run_simulator(const std::string& filename) {
-  using Parameters = typename Problem::Parameters;
-  using Simulator = typename Problem::Simulator;
-
+auto get_input_data(const std::string& filename) {
   std::ifstream file(filename);
   if (!file) {
     throw std::runtime_error(
         fmt::format("Error: could not open a file: {}", filename));
   }
-  const auto j = Json::parse(file);
-  const auto params = j.get<Parameters>();
+  return Json::parse(file);
+}
+
+template <typename Simulator>
+void run_simulator(const Json& j) {
+  const auto params = j.get<typename Simulator::Parameters>();
   Simulator simulator(params);
   simulator.run();
 }
@@ -81,9 +102,35 @@ int main(int argc, char* argv[]) {
 
   try {
     if (*sub1) {
-      run_simulator<PoiseuilleProblem>(filename1);
+      const auto j = get_input_data(filename1);
+      if (j.contains("singleRelaxationTimeModel")) {
+        using Simulator =
+            lbm::PoiseuilleFlowSimulator<lbm::SingleRelaxationTimeModel>;
+        run_simulator<Simulator>(j);
+      } else if (j.contains("multipleRelaxationTimeModel")) {
+        using Simulator =
+            lbm::PoiseuilleFlowSimulator<lbm::MultipleRelaxationTimeModel>;
+        run_simulator<Simulator>(j);
+      } else {
+        throw std::runtime_error(
+            "Error: collision model parameters not found: "
+            "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
+      }
     } else if (*sub2) {
-      run_simulator<CavityProblem>(filename2);
+      const auto j = get_input_data(filename2);
+      if (j.contains("singleRelaxationTimeModel")) {
+        using Simulator =
+            lbm::CavityFlowSimulator<lbm::SingleRelaxationTimeModel>;
+        run_simulator<Simulator>(j);
+      } else if (j.contains("multipleRelaxationTimeModel")) {
+        using Simulator =
+            lbm::CavityFlowSimulator<lbm::MultipleRelaxationTimeModel>;
+        run_simulator<Simulator>(j);
+      } else {
+        throw std::runtime_error(
+            "Error: collision model parameters not found: "
+            "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
+      }
     } else {
       throw std::runtime_error(
           "Error: subcommand is missing: [poiseuille, cavity]");

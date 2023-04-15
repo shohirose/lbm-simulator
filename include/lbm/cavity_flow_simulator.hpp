@@ -11,40 +11,45 @@
 #include "lbm/halfway_bounce_back_boundary.hpp"
 #include "lbm/lattice.hpp"
 #include "lbm/propagator.hpp"
-#include "lbm/single_relaxation_time_model.hpp"
+#include "lbm/type_traits.hpp"
 
 namespace lbm {
 
+template <typename CollisionParameters>
 struct CavityFlowParameters {
   std::array<int, 2> grid_shape;  ///< Grid shape [nx, ny]
   double wall_velocity;
-  double reynolds_number;
   double error_limit;
   int print_frequency;
   int max_iter;
   std::string output_directory;
+  CollisionParameters collision_params;
 };
 
+template <typename CollisionModel>
 class CavityFlowSimulator {
  public:
+  using CollisionParameters = get_collision_parameters_t<CollisionModel>;
+  using Parameters = CavityFlowParameters<CollisionParameters>;
+
   /**
    * @brief Construct a new CavityFlowSimulator object
    *
    * @param params Parameters
    * @throw std::filesystem::filesystem_error
    */
-  CavityFlowSimulator(const CavityFlowParameters& params)
+  CavityFlowSimulator(const Parameters& params)
       : grid_{params.grid_shape},
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
-        ux_{params.wall_velocity},
+        reynolds_number_{calc_reynolds_number(params.collision_params.tau,
+                                              params.grid_shape[0] - 2,
+                                              params.wall_velocity)},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
-        collision_{calc_relaxation_time(params.reynolds_number,
-                                        params.wall_velocity,
-                                        static_cast<double>(grid_.nx() - 1))},
+        collision_{params.collision_params},
         propagator_{grid_},
         north_{grid_, {params.wall_velocity, 0}},
         south_{grid_, {0, 0}},
@@ -100,19 +105,21 @@ class CavityFlowSimulator {
     const auto elapsed_time =
         duration_cast<milliseconds>(end - start).count() * 1e-3;
 
-    fmt::print("total iter = {}, eps = {:.6e}, elapsed time = {:.3} sec\n",
-               tsteps, eps, elapsed_time);
+    fmt::print(
+        "total iter = {}, eps = {:.6e}, Re = {:.3e}, elapsed time = {:.3f} "
+        "sec\n",
+        tsteps, eps, reynolds_number_, elapsed_time);
 
     this->write_velocity(u);
     this->write_xy();
   }
 
  private:
-  static double calc_relaxation_time(double reynolds_number, double velocity,
-                                     double length) noexcept {
+  static double calc_reynolds_number(double relaxation_time, double length,
+                                     double velocity) noexcept {
     // dynamic viscosity
-    const auto nu = velocity * length / reynolds_number;
-    return 3.0 * nu + 0.5;
+    const auto nu = (relaxation_time - 0.5) / 3;
+    return velocity * length / nu;
   }
 
   template <typename T1, typename T2, typename T3>
@@ -203,12 +210,12 @@ class CavityFlowSimulator {
   CartesianGrid2d grid_;
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
-  double ux_;
+  double reynolds_number_;
   double error_limit_;
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
-  SingleRelaxationTimeModel collision_;
+  CollisionModel collision_;
   InternalCellPropagator propagator_;
   HalfwayBounceBackBoundary<BoundaryType::North> north_;
   HalfwayBounceBackBoundary<BoundaryType::South> south_;

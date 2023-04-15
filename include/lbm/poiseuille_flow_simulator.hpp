@@ -12,29 +12,34 @@
 #include "lbm/lattice.hpp"
 #include "lbm/periodic_boundary.hpp"
 #include "lbm/propagator.hpp"
-#include "lbm/single_relaxation_time_model.hpp"
+#include "lbm/type_traits.hpp"
 
 namespace lbm {
 
+template <typename CollisionParameters>
 struct PoiseuilleFlowParameters {
   std::array<int, 2> grid_shape;
   std::array<double, 2> external_force;
-  double relaxation_time;
   double error_limit;
   int print_frequency;
   int max_iter;
   std::string output_directory;
+  CollisionParameters collision_params;
 };
 
+template <typename CollisionModel>
 class PoiseuilleFlowSimulator {
  public:
+  using CollisionParameters = get_collision_parameters_t<CollisionModel>;
+  using Parameters = PoiseuilleFlowParameters<CollisionParameters>;
+
   /**
    * @brief Construct a new PoiseuilleFlowSimulator object
    *
    * @param params Parameters
    * @throw std::filesystem::filesystem_error
    */
-  PoiseuilleFlowSimulator(const PoiseuilleFlowParameters& params)
+  PoiseuilleFlowSimulator(const Parameters& params)
       : grid_{params.grid_shape},
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
@@ -43,7 +48,7 @@ class PoiseuilleFlowSimulator {
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
-        collision_{params.relaxation_time},
+        collision_{params.collision_params},
         propagator_{grid_},
         south_{grid_},
         north_{grid_},
@@ -197,7 +202,7 @@ class PoiseuilleFlowSimulator {
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
-  SingleRelaxationTimeModel collision_;
+  CollisionModel collision_;
   AllCellPropagator propagator_;
   BounceBackBoundary<BoundaryType::South> south_;
   BounceBackBoundary<BoundaryType::North> north_;
