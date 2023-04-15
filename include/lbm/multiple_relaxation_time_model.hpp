@@ -11,7 +11,7 @@ struct MultipleRelaxationTimeModelParameters {
   double sq;
   double seps;
   double tau;
-  
+
   MultipleRelaxationTimeModelParameters() = default;
 
   MultipleRelaxationTimeModelParameters(double se_, double sq_, double seps_,
@@ -23,22 +23,25 @@ class MultipleRelaxationTimeModel {
  public:
   MultipleRelaxationTimeModel(
       const MultipleRelaxationTimeModelParameters& params)
-      : M_{}, Minv_{}, S_{}, C_{} {
+      : C_{} {
+    Eigen::Matrix<double, 9, 9> M;
+    Eigen::Matrix<double, 9, 9> Minv;
+    Eigen::Matrix<double, 9, 1> S;
     // clang-format off
-    M_ <<  1,  1,  1,  1,  1,  1,  1,  1,  1,
-          -4, -1, -1, -1, -1,  2,  2,  2,  2,
-           4, -2, -2, -2, -2,  1,  1,  1,  1,
-           0,  1,  0, -1,  0,  1, -1, -1,  1,
-           0, -2,  0,  2,  0,  1, -1, -1,  1,
-           0,  0,  1,  0, -1,  1,  1, -1, -1,
-           0,  0, -2,  0,  2,  1,  1, -1, -1,
-           0,  1, -1,  1, -1,  0,  0,  0,  0,
-           0,  0,  0,  0,  0,  1, -1,  1, -1;
+    M <<  1,  1,  1,  1,  1,  1,  1,  1,  1,
+         -4, -1, -1, -1, -1,  2,  2,  2,  2,
+          4, -2, -2, -2, -2,  1,  1,  1,  1,
+          0,  1,  0, -1,  0,  1, -1, -1,  1,
+          0, -2,  0,  2,  0,  1, -1, -1,  1,
+          0,  0,  1,  0, -1,  1,  1, -1, -1,
+          0,  0, -2,  0,  2,  1,  1, -1, -1,
+          0,  1, -1,  1, -1,  0,  0,  0,  0,
+          0,  0,  0,  0,  0,  1, -1,  1, -1;
     // clang-format on
-    Minv_ = M_.inverse();
+    Minv = M.inverse();
     const auto snu = 1 / params.tau;
-    S_ << 0, params.se, params.seps, 0, params.sq, 0, params.sq, snu, snu;
-    C_ = Minv_ * S_.asDiagonal() * M_;
+    S << 0, params.se, params.seps, 0, params.sq, 0, params.sq, snu, snu;
+    C_ = Minv * S.asDiagonal() * M;
   }
 
   template <typename T1, typename T2>
@@ -48,10 +51,7 @@ class MultipleRelaxationTimeModel {
   }
 
  private:
-  Eigen::Matrix<double, 9, 9> M_;     ///< Transformation matrix
-  Eigen::Matrix<double, 9, 9> Minv_;  ///< Inverse of M
-  Eigen::Matrix<double, 9, 1> S_;     ///< Relaxation time vector
-  Eigen::Matrix<double, 9, 9> C_;     ///< = Minv_ * S_.asDiagonal() * M_
+  Eigen::Matrix<double, 9, 9> C_;  ///< = M^{-1} * S * M
 };
 
 }  // namespace lbm
