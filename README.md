@@ -57,7 +57,7 @@ An example of the input JSON file for the `poiseuille` simulator is:
 }
 ```
 
-If you want to use the MRT model, replace `singleRelaxationModel` element with
+If you want to use the MRT model, replace `singleRelaxationTimeModel` element with
 
 ```yaml
 "multipleRelaxationTimeModel": {
