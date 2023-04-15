@@ -11,6 +11,7 @@
 #include "lbm/halfway_bounce_back_boundary.hpp"
 #include "lbm/lattice.hpp"
 #include "lbm/propagator.hpp"
+#include "lbm/single_relaxation_time_model.hpp"
 
 namespace lbm {
 
@@ -37,12 +38,13 @@ class CavityFlowSimulator {
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
         ux_{params.wall_velocity},
-        tau_{calc_relaxation_time(params.reynolds_number, params.wall_velocity,
-                                  static_cast<double>(grid_.nx() - 1))},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
+        collision_{calc_relaxation_time(params.reynolds_number,
+                                        params.wall_velocity,
+                                        static_cast<double>(grid_.nx() - 1))},
         propagator_{grid_},
         north_{grid_, {params.wall_velocity, 0}},
         south_{grid_, {0, 0}},
@@ -130,7 +132,7 @@ class CavityFlowSimulator {
   template <typename T1, typename T2>
   void run_collision_process(Eigen::MatrixBase<T1>& f,
                              const Eigen::MatrixBase<T2>& feq) const noexcept {
-    f = f - (f - feq) / tau_;
+    collision_.apply(f, feq);
   }
 
   template <typename T1, typename T2>
@@ -202,11 +204,11 @@ class CavityFlowSimulator {
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
   double ux_;
-  double tau_;
   double error_limit_;
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
+  SingleRelaxationTimeModel collision_;
   InternalCellPropagator propagator_;
   HalfwayBounceBackBoundary<BoundaryType::North> north_;
   HalfwayBounceBackBoundary<BoundaryType::South> south_;

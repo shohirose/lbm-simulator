@@ -12,6 +12,7 @@
 #include "lbm/lattice.hpp"
 #include "lbm/periodic_boundary.hpp"
 #include "lbm/propagator.hpp"
+#include "lbm/single_relaxation_time_model.hpp"
 
 namespace lbm {
 
@@ -38,11 +39,11 @@ class PoiseuilleFlowSimulator {
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
         g_{},
-        tau_{params.relaxation_time},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
+        collision_{params.relaxation_time},
         propagator_{grid_},
         south_{grid_},
         north_{grid_},
@@ -126,7 +127,7 @@ class PoiseuilleFlowSimulator {
   template <typename T1, typename T2>
   void run_collision_process(Eigen::MatrixBase<T1>& f,
                              const Eigen::MatrixBase<T2>& feq) const noexcept {
-    f = f - (f - feq) / tau_;
+    collision_.apply(f, feq);
   }
 
   template <typename T1, typename T2>
@@ -192,11 +193,11 @@ class PoiseuilleFlowSimulator {
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
   Eigen::Matrix<double, 9, 1> g_;
-  double tau_;
   double error_limit_;
   int print_freq_;
   int max_iter_;
   FileWriter writer_;
+  SingleRelaxationTimeModel collision_;
   AllCellPropagator propagator_;
   BounceBackBoundary<BoundaryType::South> south_;
   BounceBackBoundary<BoundaryType::North> north_;
