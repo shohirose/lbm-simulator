@@ -7,11 +7,14 @@
         0.00001,
         0.0
     ],
-    "singleRelaxationTimeModel": {
-        "relaxationTime": 0.56
+    "multipleRelaxationTimeModel": {
+        "se": 1.5,
+        "sq": 1.5,
+        "seps": 1.4,
+        "tau": 0.56
     },
     "errorLimit": 1e-10,
     "printFrequency": 5000,
     "maxIteration": 1000000,
-    "outputDirectory": "./result/poiseuille"
+    "outputDirectory": "./result/poiseuille_mrt"
 }
