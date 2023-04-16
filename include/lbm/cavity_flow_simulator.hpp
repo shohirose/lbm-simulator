@@ -7,6 +7,7 @@
 #include <string>
 
 #include "lbm/cartesian_grid_2d.hpp"
+#include "lbm/collision_model.hpp"
 #include "lbm/file_writer.hpp"
 #include "lbm/halfway_bounce_back_boundary.hpp"
 #include "lbm/lattice.hpp"
@@ -15,7 +16,6 @@
 
 namespace lbm {
 
-template <typename CollisionParameters>
 struct CavityFlowParameters {
   std::array<int, 2> grid_shape;  ///< Grid shape [nx, ny]
   double wall_velocity;
@@ -26,11 +26,9 @@ struct CavityFlowParameters {
   CollisionParameters collision_params;
 };
 
-template <typename CollisionModel>
 class CavityFlowSimulator {
  public:
-  using CollisionParameters = get_collision_parameters_t<CollisionModel>;
-  using Parameters = CavityFlowParameters<CollisionParameters>;
+  using Parameters = CavityFlowParameters;
 
   /**
    * @brief Construct a new CavityFlowSimulator object
@@ -38,18 +36,18 @@ class CavityFlowSimulator {
    * @param params Parameters
    * @throw std::filesystem::filesystem_error
    */
-  CavityFlowSimulator(const Parameters& params)
+  CavityFlowSimulator(const CavityFlowParameters& params)
       : grid_{params.grid_shape},
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
-        reynolds_number_{calc_reynolds_number(params.collision_params.tau,
-                                              params.grid_shape[0] - 2,
-                                              params.wall_velocity)},
+        reynolds_number_{calc_reynolds_number(
+            get_relaxation_time(params.collision_params),
+            params.grid_shape[0] - 2, params.wall_velocity)},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
         writer_{params.output_directory},
-        collision_{params.collision_params},
+        collision_{create_collision_model(params.collision_params)},
         propagator_{grid_},
         north_{grid_, {params.wall_velocity, 0}},
         south_{grid_, {0, 0}},
@@ -139,7 +137,8 @@ class CavityFlowSimulator {
   template <typename T1, typename T2>
   void run_collision_process(Eigen::MatrixBase<T1>& f,
                              const Eigen::MatrixBase<T2>& feq) const noexcept {
-    collision_.apply(f, feq);
+    std::visit([&f, &feq](const auto& model) { model.apply(f, feq); },
+               collision_);
   }
 
   template <typename T1, typename T2>

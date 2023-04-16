@@ -26,9 +26,7 @@ void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
 /**
  * @brief Conversion function from json to CavityFlowParameter
  */
-template <typename CollisionParameters>
-void from_json(const Json& j,
-               CavityFlowParameters<CollisionParameters>& params) {
+void from_json(const Json& j, CavityFlowParameters& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("wallVelocity").get_to(params.wall_velocity);
   // j.at("reynoldsNumber").get_to(params.reynolds_number);
@@ -36,33 +34,40 @@ void from_json(const Json& j,
   j.at("printFrequency").get_to(params.print_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
-  if constexpr (std::is_same_v<CollisionParameters,
-                               SingleRelaxationTimeModelParameters>) {
-    j.at("singleRelaxationTimeModel").get_to(params.collision_params);
-  } else if constexpr (std::is_same_v<CollisionParameters,
-                                      MultipleRelaxationTimeModelParameters>) {
-    j.at("multipleRelaxationTimeModel").get_to(params.collision_params);
+  if (j.contains("singleRelaxationTimeModel")) {
+    params.collision_params = j.at("singleRelaxationTimeModel")
+                                  .get<SingleRelaxationTimeModelParameters>();
+  } else if (j.contains("multipleRelaxationTimeModel")) {
+    params.collision_params = j.at("multipleRelaxationTimeModel")
+                                  .get<MultipleRelaxationTimeModelParameters>();
+  } else {
+    throw std::runtime_error(
+        "Error: collision model parameters not found: "
+        "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
   }
 }
 
 /**
  * @brief Conversion function from json to PoiseuilleFlowParameter
  */
-template <typename CollisionParameters>
-void from_json(const Json& j,
-               PoiseuilleFlowParameters<CollisionParameters>& params) {
+void from_json(const Json& j, PoiseuilleFlowParameters& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("externalForce").get_to(params.external_force);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
-  if constexpr (std::is_same_v<CollisionParameters,
-                               SingleRelaxationTimeModelParameters>) {
-    j.at("singleRelaxationTimeModel").get_to(params.collision_params);
-  } else if constexpr (std::is_same_v<CollisionParameters,
-                                      MultipleRelaxationTimeModelParameters>) {
-    j.at("multipleRelaxationTimeModel").get_to(params.collision_params);
+  if (j.contains("singleRelaxationTimeModel")) {
+    params.collision_params = j.at("singleRelaxationTimeModel")
+                                  .get<SingleRelaxationTimeModelParameters>();
+  } else if (j.contains("multipleRelaxationTimeModel")) {
+    params.collision_params = j.at("multipleRelaxationTimeModel")
+                                  .get<MultipleRelaxationTimeModelParameters>();
+
+  } else {
+    throw std::runtime_error(
+        "Error: collision model parameters not found: "
+        "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
   }
 }
 
@@ -103,34 +108,10 @@ int main(int argc, char* argv[]) {
   try {
     if (*sub1) {
       const auto j = get_input_data(filename1);
-      if (j.contains("singleRelaxationTimeModel")) {
-        using Simulator =
-            lbm::PoiseuilleFlowSimulator<lbm::SingleRelaxationTimeModel>;
-        run_simulator<Simulator>(j);
-      } else if (j.contains("multipleRelaxationTimeModel")) {
-        using Simulator =
-            lbm::PoiseuilleFlowSimulator<lbm::MultipleRelaxationTimeModel>;
-        run_simulator<Simulator>(j);
-      } else {
-        throw std::runtime_error(
-            "Error: collision model parameters not found: "
-            "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
-      }
+      run_simulator<lbm::PoiseuilleFlowSimulator>(j);
     } else if (*sub2) {
       const auto j = get_input_data(filename2);
-      if (j.contains("singleRelaxationTimeModel")) {
-        using Simulator =
-            lbm::CavityFlowSimulator<lbm::SingleRelaxationTimeModel>;
-        run_simulator<Simulator>(j);
-      } else if (j.contains("multipleRelaxationTimeModel")) {
-        using Simulator =
-            lbm::CavityFlowSimulator<lbm::MultipleRelaxationTimeModel>;
-        run_simulator<Simulator>(j);
-      } else {
-        throw std::runtime_error(
-            "Error: collision model parameters not found: "
-            "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
-      }
+      run_simulator<lbm::CavityFlowSimulator>(j);
     } else {
       throw std::runtime_error(
           "Error: subcommand is missing: [poiseuille, cavity]");
