@@ -29,7 +29,6 @@ void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
 void from_json(const Json& j, CavityFlowParameters& params) {
   j.at("gridShape").get_to(params.grid_shape);
   j.at("wallVelocity").get_to(params.wall_velocity);
-  // j.at("reynoldsNumber").get_to(params.reynolds_number);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
   j.at("maxIteration").get_to(params.max_iter);
