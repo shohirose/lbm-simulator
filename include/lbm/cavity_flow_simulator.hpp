@@ -40,9 +40,12 @@ class CavityFlowSimulator {
       : grid_{params.grid_shape},
         c_{Lattice<LatticeType::D2Q9>::get_lattice_vector()},
         w_{Lattice<LatticeType::D2Q9>::get_weight()},
-        reynolds_number_{calc_reynolds_number(
-            get_relaxation_time(params.collision_params),
-            params.grid_shape[0] - 2, params.wall_velocity)},
+        dynamic_viscosity_{calc_dynamic_viscosity(
+            get_relaxation_time(params.collision_params))},
+        length_{static_cast<double>(params.grid_shape[0] - 2)},
+        wall_velocity_{params.wall_velocity},
+        reynolds_number_{
+            calc_reynolds_number(dynamic_viscosity_, length_, wall_velocity_)},
         error_limit_{params.error_limit},
         print_freq_{params.print_frequency},
         max_iter_{params.max_iter},
@@ -104,20 +107,22 @@ class CavityFlowSimulator {
         duration_cast<milliseconds>(end - start).count() * 1e-3;
 
     fmt::print(
-        "total iter = {}, eps = {:.6e}, Re = {:.3e}, elapsed time = {:.3f} "
-        "sec\n",
-        tsteps, eps, reynolds_number_, elapsed_time);
+        "total iter = {}, eps = {:.6e}, Re = {:.3e}, dynamic viscosity = "
+        "{:.3}, elapsed time = {:.3f} sec\n",
+        tsteps, eps, reynolds_number_, dynamic_viscosity_, elapsed_time);
 
     this->write_velocity(u);
     this->write_xy();
   }
 
  private:
-  static double calc_reynolds_number(double relaxation_time, double length,
+  static double calc_dynamic_viscosity(double relaxation_time) noexcept {
+    return (relaxation_time - 0.5) / 3;
+  }
+
+  static double calc_reynolds_number(double dynamic_viscosity, double length,
                                      double velocity) noexcept {
-    // dynamic viscosity
-    const auto nu = (relaxation_time - 0.5) / 3;
-    return velocity * length / nu;
+    return velocity * length / dynamic_viscosity;
   }
 
   template <typename T1, typename T2, typename T3>
@@ -209,6 +214,9 @@ class CavityFlowSimulator {
   CartesianGrid2d grid_;
   Eigen::Matrix<double, 2, 9> c_;
   Eigen::Matrix<double, 9, 1> w_;
+  double dynamic_viscosity_;
+  double length_;
+  double wall_velocity_;
   double reynolds_number_;
   double error_limit_;
   int print_freq_;
