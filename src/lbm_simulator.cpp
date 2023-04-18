@@ -1,11 +1,8 @@
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
-#include <type_traits>
 
 #include "lbm/cavity_flow_simulator.hpp"
-#include "lbm/multiple_relaxation_time_model.hpp"
 #include "lbm/poiseuille_flow_simulator.hpp"
-#include "lbm/single_relaxation_time_model.hpp"
 
 using Json = nlohmann::json;
 namespace fs = std::filesystem;
@@ -21,6 +18,11 @@ void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
   j.at("sq").get_to(params.sq);
   j.at("seps").get_to(params.seps);
   j.at("tau").get_to(params.tau);
+}
+
+void from_json(const Json& j,
+               NonOrthogonalCentralMomentModelParameters& params) {
+  j.at("s").get_to(params.s);
 }
 
 /**
@@ -39,10 +41,15 @@ void from_json(const Json& j, CavityFlowParameters& params) {
   } else if (j.contains("multipleRelaxationTimeModel")) {
     params.collision_params = j.at("multipleRelaxationTimeModel")
                                   .get<MultipleRelaxationTimeModelParameters>();
+  } else if (j.contains("nonOrthogonalCentralMomentModel")) {
+    params.collision_params =
+        j.at("nonOrthogonalCentralMomentModel")
+            .get<NonOrthogonalCentralMomentModelParameters>();
   } else {
     throw std::runtime_error(
         "Error: collision model parameters not found: "
-        "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
+        "[singleRelaxationTimeModel, multipleRelaxationTimeModel, "
+        "nonOrthogonalCentralMomentModel]");
   }
 }
 
@@ -62,7 +69,10 @@ void from_json(const Json& j, PoiseuilleFlowParameters& params) {
   } else if (j.contains("multipleRelaxationTimeModel")) {
     params.collision_params = j.at("multipleRelaxationTimeModel")
                                   .get<MultipleRelaxationTimeModelParameters>();
-
+  } else if (j.contains("nonOrthogonalCentralMomentModel")) {
+    params.collision_params =
+        j.at("nonOrthogonalCentralMomentModel")
+            .get<NonOrthogonalCentralMomentModelParameters>();
   } else {
     throw std::runtime_error(
         "Error: collision model parameters not found: "

@@ -53,29 +53,32 @@ endif()
 FetchContent_MakeAvailable(${download_libs})
 
 # ------------------------------- lbm library ----------------------------------
-add_library(lbm INTERFACE)
+add_library(lbm
+    src/cavity_flow_simulator.cpp
+    src/poiseuille_flow_simulator.cpp
+)
 target_compile_features(lbm
-INTERFACE
+PUBLIC
     cxx_std_17
 )
 target_compile_options(lbm
-INTERFACE
+PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/W3 /utf-8>
     $<$<CXX_COMPILER_ID:GNU>:-Wall -Wpedantic -Wextra>
     $<$<CXX_COMPILER_ID:Clang>:-Wall -Wpedantic -Wextra>
 )
 target_compile_definitions(lbm
-INTERFACE
+PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX _USE_MATH_DEFINES>
     EIGEN_NO_AUTOMATIC_RESIZING
 )
 target_link_libraries(lbm
-INTERFACE
+PUBLIC
     Eigen3::Eigen
     fmt::fmt
 )
 target_include_directories(lbm
-INTERFACE
+PUBLIC
     include
 )
 
