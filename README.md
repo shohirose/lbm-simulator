@@ -9,6 +9,7 @@ The following collision models are implemented:
 
 - Single relaxation time (SRT) model
 - Multiple relaxation time (MRT) model
+- Central Moment (CM) model (not yet verified)
 
 # How to Build
 
@@ -57,7 +58,7 @@ An example of the input JSON file for the `poiseuille` simulator is:
 }
 ```
 
-If you want to use the MRT model, replace `singleRelaxationTimeModel` element with
+If you want to use the MRT or CM model, replace `singleRelaxationTimeModel` element with
 
 ```yaml
 "multipleRelaxationTimeModel": {
@@ -65,6 +66,14 @@ If you want to use the MRT model, replace `singleRelaxationTimeModel` element wi
     "sq": 1.5,
     "seps": 1.4,
     "tau": 0.56,
+}
+```
+
+or
+
+```yaml
+"nonOrthogonalCentralMomentModel": {
+    "s": [1.0, 1.0, 1.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
 }
 ```
 
