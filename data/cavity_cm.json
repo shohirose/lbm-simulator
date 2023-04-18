@@ -1,0 +1,14 @@
+{
+    "gridShape": [
+        52,
+        52
+    ],
+    "wallVelocity": 0.1,
+    "nonOrthogonalCentralMomentModel": {
+        "s": [1.0, 1.0, 1.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
+    },
+    "errorLimit": 1e-6,
+    "printFrequency": 1000,
+    "maxIteration": 7000,
+    "outputDirectory": "./result/cavity_cm"
+}
