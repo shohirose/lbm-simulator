@@ -99,3 +99,20 @@ An example of the input JSON file for the `cavity` simulator is:
 ```
 
 `multileRelaxationTimeModel` can be also used as well as in the `poiseuille` simulator.
+
+# Results
+
+## 2-D Cavity Flow
+
+### MRT Model
+
+Re = 400.
+
+![velocityMap](./fig/cavity_mrt_velocity_cmap.png)
+
+![uxuy](./fig/cavity_mrt_ux_uy.png)
+
+The above result is similar to the following webpage:
+
+[Lid-driven cavity flow (Re=400 and 1000)](https://www.math.pku.edu.cn/teachers/tanghz/private/homepage/Lid-drivencavityflow.htm)
+
