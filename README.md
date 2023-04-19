@@ -47,7 +47,7 @@ An example of the input JSON file for the `poiseuille` simulator is:
     ],
     // Parameters for SRT model
     "singleRelaxationTimeModel": {
-        "relaxationTime": 0.56
+        "tau": 0.56
     },
     // Criteria to end while-loops
     "errorLimit": 1e-10,
@@ -72,8 +72,8 @@ If you want to use the MRT or CM model, replace `singleRelaxationTimeModel` elem
 or
 
 ```yaml
-"nonOrthogonalCentralMomentModel": {
-    "s": [1.0, 1.0, 1.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
+"centralMomentModel": {
+    "relaxationMatrix": [1.0, 1.0, 1.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
 }
 ```
 
@@ -88,7 +88,7 @@ An example of the input JSON file for the `cavity` simulator is:
     // Wall velocity of the top boundary
     "wallVelocity": 0.1,
     "singleRelaxationTimeModel": {
-        "relaxationTime": 0.65
+        "tau": 0.65
     },
     "errorLimit": 1e-10,
     "printFrequency": 10000,
