@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 namespace lbm {
 
 void from_json(const Json& j, SingleRelaxationTimeModelParameters& params) {
-  j.at("relaxationTime").get_to(params.tau);
+  j.at("tau").get_to(params.tau);
 }
 
 void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
