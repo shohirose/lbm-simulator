@@ -21,7 +21,7 @@ void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
 }
 
 void from_json(const Json& j, CentralMomentModelParameters& params) {
-  j.at("s").get_to(params.s);
+  j.at("relaxationMatrix").get_to(params.relaxation_matrix);
 }
 
 /**

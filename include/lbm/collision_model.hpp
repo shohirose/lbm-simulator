@@ -48,7 +48,7 @@ inline double get_relaxation_time(const CollisionParameters& params) {
                  params)) {
     return std::get<MultipleRelaxationTimeModelParameters>(params).tau;
   } else if (std::holds_alternative<CentralMomentModelParameters>(params)) {
-    return 1 / std::get<CentralMomentModelParameters>(params).s[4];
+    return 1 / std::get<CentralMomentModelParameters>(params)[4];
   } else {
     throw std::runtime_error(
         "Error: CollisionParameters holds neither of "

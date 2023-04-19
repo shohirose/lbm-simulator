@@ -8,12 +8,30 @@
 namespace lbm {
 
 struct CentralMomentModelParameters {
-  std::array<double, 9> s;  ///< Relaxation matrix parameters
+  std::array<double, 9> relaxation_matrix;
 
   CentralMomentModelParameters() = default;
 
   CentralMomentModelParameters(const std::array<double, 9>& s_)
-      : s{s_} {}
+      : relaxation_matrix{s_} {}
+
+  CentralMomentModelParameters(const CentralMomentModelParameters&) = default;
+  CentralMomentModelParameters(CentralMomentModelParameters&&) = default;
+
+  CentralMomentModelParameters& operator=(
+      const std::array<double, 9>& s) noexcept {
+    relaxation_matrix = s;
+  }
+  CentralMomentModelParameters& operator=(const CentralMomentModelParameters&) =
+      default;
+  CentralMomentModelParameters& operator=(CentralMomentModelParameters&&) =
+      default;
+
+  auto* data() noexcept { return relaxation_matrix.data(); }
+  const auto* data() const noexcept { return relaxation_matrix.data(); }
+
+  auto& operator[](int i) noexcept { return relaxation_matrix[i]; }
+  const auto& operator[](int i) const noexcept { return relaxation_matrix[i]; }
 };
 
 class CentralMomentModel {
@@ -21,10 +39,8 @@ class CentralMomentModel {
   using Matrix9d = Eigen::Matrix<double, 9, 9>;
   using Vector9d = Eigen::Matrix<double, 9, 1>;
 
-  CentralMomentModel(
-      const CentralMomentModelParameters& params)
-      : C_{} {
-    Eigen::Map<const Vector9d> S(params.s.data());
+  CentralMomentModel(const CentralMomentModelParameters& params) : C_{} {
+    Eigen::Map<const Vector9d> S(params.data());
     Matrix9d M;
     Matrix9d Minv;
     // clang-format off
