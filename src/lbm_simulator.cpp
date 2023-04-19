@@ -20,8 +20,7 @@ void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
   j.at("tau").get_to(params.tau);
 }
 
-void from_json(const Json& j,
-               NonOrthogonalCentralMomentModelParameters& params) {
+void from_json(const Json& j, CentralMomentModelParameters& params) {
   j.at("s").get_to(params.s);
 }
 
@@ -41,15 +40,14 @@ void from_json(const Json& j, CavityFlowParameters& params) {
   } else if (j.contains("multipleRelaxationTimeModel")) {
     params.collision_params = j.at("multipleRelaxationTimeModel")
                                   .get<MultipleRelaxationTimeModelParameters>();
-  } else if (j.contains("nonOrthogonalCentralMomentModel")) {
+  } else if (j.contains("centralMomentModel")) {
     params.collision_params =
-        j.at("nonOrthogonalCentralMomentModel")
-            .get<NonOrthogonalCentralMomentModelParameters>();
+        j.at("centralMomentModel").get<CentralMomentModelParameters>();
   } else {
     throw std::runtime_error(
         "Error: collision model parameters not found: "
         "[singleRelaxationTimeModel, multipleRelaxationTimeModel, "
-        "nonOrthogonalCentralMomentModel]");
+        "centralMomentModel]");
   }
 }
 
@@ -69,14 +67,14 @@ void from_json(const Json& j, PoiseuilleFlowParameters& params) {
   } else if (j.contains("multipleRelaxationTimeModel")) {
     params.collision_params = j.at("multipleRelaxationTimeModel")
                                   .get<MultipleRelaxationTimeModelParameters>();
-  } else if (j.contains("nonOrthogonalCentralMomentModel")) {
+  } else if (j.contains("centralMomentModel")) {
     params.collision_params =
-        j.at("nonOrthogonalCentralMomentModel")
-            .get<NonOrthogonalCentralMomentModelParameters>();
+        j.at("centralMomentModel").get<CentralMomentModelParameters>();
   } else {
     throw std::runtime_error(
         "Error: collision model parameters not found: "
-        "[singleRelaxationTimeModel, multipleRelaxationTimeModel]");
+        "[singleRelaxationTimeModel, multipleRelaxationTimeModel, "
+        "centralMomentModel]");
   }
 }
 

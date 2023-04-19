@@ -68,14 +68,14 @@ class PoiseuilleFlowSimulator {
     } else if (std::holds_alternative<MultipleRelaxationTimeModel>(
                    collision_)) {
       std::get<MultipleRelaxationTimeModel>(collision_).apply(f, feq);
-    } else if (std::holds_alternative<NonOrthogonalCentralMomentModel>(
+    } else if (std::holds_alternative<CentralMomentModel>(
                    collision_)) {
-      std::get<NonOrthogonalCentralMomentModel>(collision_).apply(f, feq, u);
+      std::get<CentralMomentModel>(collision_).apply(f, feq, u);
     } else {
       throw std::runtime_error(
           "Error: CollisionModel holds neither of "
           "SingleRelaxationTimeModel, MultipleRelaxationTimeModel, or "
-          "NonOrthogonalCentralMomentModel.");
+          "CentralMomentModel.");
     }
   }
 

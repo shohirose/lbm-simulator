@@ -1,5 +1,5 @@
-#ifndef LBM_NON_ORTHOGONAL_CENTRAL_MOMENT_MODEL_HPP
-#define LBM_NON_ORTHOGONAL_CENTRAL_MOMENT_MODEL_HPP
+#ifndef LBM_CENTRAL_MOMENT_MODEL_HPP
+#define LBM_CENTRAL_MOMENT_MODEL_HPP
 
 #include <Eigen/Core>
 #include <array>
@@ -7,22 +7,22 @@
 
 namespace lbm {
 
-struct NonOrthogonalCentralMomentModelParameters {
+struct CentralMomentModelParameters {
   std::array<double, 9> s;  ///< Relaxation matrix parameters
 
-  NonOrthogonalCentralMomentModelParameters() = default;
+  CentralMomentModelParameters() = default;
 
-  NonOrthogonalCentralMomentModelParameters(const std::array<double, 9>& s_)
+  CentralMomentModelParameters(const std::array<double, 9>& s_)
       : s{s_} {}
 };
 
-class NonOrthogonalCentralMomentModel {
+class CentralMomentModel {
  public:
   using Matrix9d = Eigen::Matrix<double, 9, 9>;
   using Vector9d = Eigen::Matrix<double, 9, 1>;
 
-  NonOrthogonalCentralMomentModel(
-      const NonOrthogonalCentralMomentModelParameters& params)
+  CentralMomentModel(
+      const CentralMomentModelParameters& params)
       : C_{} {
     Eigen::Map<const Vector9d> S(params.s.data());
     Matrix9d M;
@@ -143,4 +143,4 @@ class NonOrthogonalCentralMomentModel {
 
 }  // namespace lbm
 
-#endif  // LBM_NON_ORTHOGONAL_CENTRAL_MOMENT_MODEL_HPP
+#endif  // LBM_CENTRAL_MOMENT_MODEL_HPP
