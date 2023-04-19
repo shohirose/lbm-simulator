@@ -112,7 +112,8 @@ Re = 400.
 
 ![uxuy](./fig/cavity_mrt_ux_uy.png)
 
-The above result is similar to the following webpage:
 
-[Lid-driven cavity flow (Re=400 and 1000)](https://www.math.pku.edu.cn/teachers/tanghz/private/homepage/Lid-drivencavityflow.htm)
+# References
+
+[1] V.Ghia, K.N.Ghia and C.T.Shin. 1982. "High-Re solutions for incompressible flow using the Navier-Stokes equations and a multi-grid method", _J. Comp. Phys._, vol. 48, pp. 387-411
 
