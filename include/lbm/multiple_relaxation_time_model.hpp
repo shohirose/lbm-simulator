@@ -21,28 +21,11 @@ struct MultipleRelaxationTimeModelParameters {
 
 class MultipleRelaxationTimeModel {
  public:
+  using Matrix9d = Eigen::Matrix<double, 9, 9>;
+  using Vector9d = Eigen::Matrix<double, 9, 1>;
+
   MultipleRelaxationTimeModel(
-      const MultipleRelaxationTimeModelParameters& params)
-      : C_{} {
-    Eigen::Matrix<double, 9, 9> M;
-    Eigen::Matrix<double, 9, 9> Minv;
-    Eigen::Matrix<double, 9, 1> S;
-    // clang-format off
-    M <<  1,  1,  1,  1,  1,  1,  1,  1,  1,
-         -4, -1, -1, -1, -1,  2,  2,  2,  2,
-          4, -2, -2, -2, -2,  1,  1,  1,  1,
-          0,  1,  0, -1,  0,  1, -1, -1,  1,
-          0, -2,  0,  2,  0,  1, -1, -1,  1,
-          0,  0,  1,  0, -1,  1,  1, -1, -1,
-          0,  0, -2,  0,  2,  1,  1, -1, -1,
-          0,  1, -1,  1, -1,  0,  0,  0,  0,
-          0,  0,  0,  0,  0,  1, -1,  1, -1;
-    // clang-format on
-    Minv = M.inverse();
-    const auto snu = 1 / params.tau;
-    S << 0, params.se, params.seps, 0, params.sq, 0, params.sq, snu, snu;
-    C_ = Minv * S.asDiagonal() * M;
-  }
+      const MultipleRelaxationTimeModelParameters& params);
 
   template <typename T1, typename T2>
   void apply(Eigen::MatrixBase<T1>& f,
@@ -51,7 +34,7 @@ class MultipleRelaxationTimeModel {
   }
 
  private:
-  Eigen::Matrix<double, 9, 9> C_;  ///< = M^{-1} * S * M
+  Matrix9d C_;  ///< = M^{-1} * S * M
 };
 
 }  // namespace lbm
