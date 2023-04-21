@@ -9,7 +9,7 @@ The following collision models are implemented:
 
 - Single relaxation time (SRT) model
 - Multiple relaxation time (MRT) model
-- Central Moment (CM) model (not yet verified)
+- Central Moment (CM) model
 
 # How to Build
 
@@ -73,7 +73,7 @@ or
 
 ```yaml
 "centralMomentModel": {
-    "relaxationMatrix": [1.0, 1.0, 1.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
+    "relaxationMatrix": [0.0, 0.0, 0.0, 1.0, 1.75, 1.75, 1.0, 1.0, 1.0]
 }
 ```
 
