@@ -38,8 +38,8 @@ CentralMomentModel::CentralMomentModel(
   // clang-format on
 }
 
-CentralMomentModel::Matrix9d CentralMomentModel::get_N(double ux,
-                                                       double uy) noexcept {
+CentralMomentModel::Matrix9d CentralMomentModel::get_shift_matrix(
+    double ux, double uy) noexcept {
   const auto ux2 = ux * ux;
   const auto uy2 = uy * uy;
   Matrix9d N = Matrix9d::Identity();
@@ -77,8 +77,8 @@ CentralMomentModel::Matrix9d CentralMomentModel::get_N(double ux,
   return N;
 }
 
-CentralMomentModel::Matrix9d CentralMomentModel::get_Ninv(double ux,
-                                                          double uy) noexcept {
+CentralMomentModel::Matrix9d CentralMomentModel::get_inverse_shift_matrix(
+    double ux, double uy) noexcept {
   const auto ux2 = ux * ux;
   const auto uy2 = uy * uy;
   Matrix9d Ninv = Matrix9d::Identity();

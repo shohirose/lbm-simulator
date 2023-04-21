@@ -46,8 +46,8 @@ class CentralMomentModel {
   void apply(Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
              const Eigen::MatrixBase<T3>& u) const noexcept {
     for (int i = 0; i < f.cols(); ++i) {
-      const Matrix9d N = get_N(u(0, i), u(1, i));
-      const Matrix9d Ninv = get_Ninv(u(0, i), u(1, i));
+      const Matrix9d N = get_shift_matrix(u(0, i), u(1, i));
+      const Matrix9d Ninv = get_inverse_shift_matrix(u(0, i), u(1, i));
       Vector9d df = feq.col(i) - f.col(i);
       df = M_ * df;
       df = N * df;
@@ -59,12 +59,29 @@ class CentralMomentModel {
   }
 
  private:
-  static Matrix9d get_N(double ux, double uy) noexcept;
+  /**
+   * @brief Compute shift matrix from raw moments to central moments
+   *
+   * @param ux Velocity in the x direction
+   * @param uy Velocity in the y direction
+   * @return Matrix9d Shift matrix
+   */
+  static Matrix9d get_shift_matrix(double ux, double uy) noexcept;
 
-  static Matrix9d get_Ninv(double ux, double uy) noexcept;
+  /**
+   * @brief Compute the inverse of shift matrix
+   *
+   * @param ux Velocity in the x direction
+   * @param uy Velocity in the y direction
+   * @return Matrix9d Inverse of shift matrix
+   */
+  static Matrix9d get_inverse_shift_matrix(double ux, double uy) noexcept;
 
+  /// @brief Transformation matrix from distribution functions to raw moments
   Matrix9d M_;
+  /// @brief Inverse matrix of M
   Matrix9d Minv_;
+  /// @brief Relaxation matrix
   Vector9d S_;
 };
 
