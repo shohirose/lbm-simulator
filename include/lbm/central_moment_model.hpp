@@ -1,9 +1,10 @@
 #ifndef LBM_CENTRAL_MOMENT_MODEL_HPP
 #define LBM_CENTRAL_MOMENT_MODEL_HPP
 
+#include <fmt/core.h>
+
 #include <Eigen/Core>
 #include <array>
-#include <iostream>
 
 namespace lbm {
 
@@ -39,12 +40,12 @@ class CentralMomentModel {
   using Matrix9d = Eigen::Matrix<double, 9, 9>;
   using Vector9d = Eigen::Matrix<double, 9, 1>;
 
-  CentralMomentModel(const CentralMomentModelParameters& params) : C_{} {
+  CentralMomentModel(const CentralMomentModelParameters& params)
+      : M_{}, Minv_{}, S_{} {
     Eigen::Map<const Vector9d> S(params.data());
-    Matrix9d M;
-    Matrix9d Minv;
+    S_ = S;
     // clang-format off
-    M  <<  1,  1,  1,  1,  1,  1,  1,  1,  1,
+    M_ <<  1,  1,  1,  1,  1,  1,  1,  1,  1,
            0,  1,  0, -1,  0,  1, -1, -1,  1,
            0,  0,  1,  0, -1,  1,  1, -1, -1,
            0,  1,  1,  1,  1,  2,  2,  2,  2,
@@ -53,7 +54,7 @@ class CentralMomentModel {
            0,  0,  0,  0,  0,  1,  1, -1, -1,
            0,  0,  0,  0,  0,  1, -1, -1,  1,
            0,  0,  0,  0,  0,  1,  1,  1,  1;
-    Minv  << 1,    0,    0,   -1,     0,     0,     0,     0,     1,
+    Minv_ << 1,    0,    0,   -1,     0,     0,     0,     0,     1,
              0,  0.5,    0, 0.25,  0.25,     0,     0,  -0.5,  -0.5,
              0,    0,  0.5, 0.25, -0.25,     0,  -0.5,     0,  -0.5,
              0, -0.5,    0, 0.25,  0.25,     0,     0,   0.5,  -0.5,
@@ -63,7 +64,6 @@ class CentralMomentModel {
              0,    0,    0,    0,     0,  0.25, -0.25, -0.25,  0.25,
              0,    0,    0,    0,     0, -0.25, -0.25,  0.25,  0.25;
     // clang-format on
-    C_ = Minv * S.asDiagonal() * M;
   }
 
   template <typename T1, typename T2, typename T3>
@@ -72,8 +72,13 @@ class CentralMomentModel {
     for (int i = 0; i < f.cols(); ++i) {
       const Matrix9d N = get_N(u(0, i), u(1, i));
       const Matrix9d Ninv = get_Ninv(u(0, i), u(1, i));
-      const Matrix9d C = Ninv * C_ * N;
-      f.col(i) -= C * (f.col(i) - feq.col(i));
+      Vector9d df = feq.col(i) - f.col(i);
+      df = M_ * df;
+      df = N * df;
+      df = S_.asDiagonal() * df;
+      df = Ninv * df;
+      df = Minv_ * df;
+      f.col(i) += df;
     }
   }
 
@@ -83,7 +88,7 @@ class CentralMomentModel {
     const auto uy2 = uy * uy;
     Matrix9d N = Matrix9d::Identity();
     N(1, 0) = -ux;
-    N(2, 0) = uy;
+    N(2, 0) = -uy;
     N(3, 0) = ux2 + uy2;
     N(4, 0) = ux2 - uy2;
     N(5, 0) = ux * uy;
@@ -154,7 +159,9 @@ class CentralMomentModel {
     return Ninv;
   }
 
-  Eigen::Matrix<double, 9, 9> C_;
+  Matrix9d M_;
+  Matrix9d Minv_;
+  Vector9d S_;
 };
 
 }  // namespace lbm

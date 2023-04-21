@@ -67,8 +67,7 @@ class CavityFlowSimulator {
     } else if (std::holds_alternative<MultipleRelaxationTimeModel>(
                    collision_)) {
       std::get<MultipleRelaxationTimeModel>(collision_).apply(f, feq);
-    } else if (std::holds_alternative<CentralMomentModel>(
-                   collision_)) {
+    } else if (std::holds_alternative<CentralMomentModel>(collision_)) {
       std::get<CentralMomentModel>(collision_).apply(f, feq, u);
     } else {
       throw std::runtime_error(
@@ -97,6 +96,19 @@ class CavityFlowSimulator {
                      const Eigen::MatrixBase<T3>& f) const noexcept {
     u.noalias() = c_ * f;
     u.array() /= rho.transpose().replicate<2, 1>().array();
+
+    for (int i = 0; i < grid_.nx(); ++i) {
+      u(Eigen::all, grid_.index(i, 0)) = Eigen::Vector2d::Zero();
+    }
+    for (int i = 0; i < grid_.nx(); ++i) {
+      u(Eigen::all, grid_.index(i, grid_.ny() - 1)) = Eigen::Vector2d::Zero();
+    }
+    for (int j = 0; j < grid_.ny(); ++j) {
+      u(Eigen::all, grid_.index(0, j)) = Eigen::Vector2d::Zero();
+    }
+    for (int j = 0; j < grid_.ny(); ++j) {
+      u(Eigen::all, grid_.index(grid_.nx() - 1, j)) = Eigen::Vector2d::Zero();
+    }
   }
 
   template <typename T1, typename T2>
