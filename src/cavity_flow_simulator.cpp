@@ -68,7 +68,9 @@ void CavityFlowSimulator::run() const {
     calc_density(rho, f);
     this->calc_velocity(u, rho, f);
 
-    eps = (u - uold).colwise().norm().maxCoeff();
+    eps = ((u - uold).colwise().norm() /
+           u.colwise().norm().maxCoeff<Eigen::PropagateNumbers>())
+              .maxCoeff();
     uold = u;
 
     if (print_freq_ > 0 && tsteps % print_freq_ == 0) {

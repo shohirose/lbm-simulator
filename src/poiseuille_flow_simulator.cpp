@@ -33,7 +33,7 @@ void PoiseuilleFlowSimulator::run() const {
   // Initialization
   const auto size = grid_.size();
   Matrix2Xd u = Matrix2Xd::Zero(2, size);
-  MatrixXd u0 = u;
+  MatrixXd uold = u;
   VectorXd rho = VectorXd::Ones(size);
   Matrix9Xd feq(9, size);
   this->calc_equilibrium_distribution_function(feq, u, rho);
@@ -54,8 +54,10 @@ void PoiseuilleFlowSimulator::run() const {
     calc_density(rho, f);
     this->calc_velocity(u, rho, f);
 
-    eps = (u - u0).colwise().norm().maxCoeff();
-    u0 = u;
+    eps = ((u - uold).colwise().norm() /
+           u.colwise().norm().maxCoeff<Eigen::PropagateNumbers>())
+              .maxCoeff();
+    uold = u;
 
     if (print_freq_ > 0 && tsteps % print_freq_ == 0) {
       fmt::print("iter = {}, eps = {:.6e}\n", tsteps, eps);
