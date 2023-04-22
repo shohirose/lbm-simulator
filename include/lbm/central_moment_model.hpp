@@ -45,11 +45,17 @@ class CentralMomentModel {
       const Matrix9d N = get_shift_matrix(u(0, i), u(1, i));
       const Matrix9d Ninv = get_inverse_shift_matrix(u(0, i), u(1, i));
       Vector9d df = feq.col(i) - f.col(i);
-      df = M_ * df;
-      df = N * df;
-      df = S_.asDiagonal() * df;
-      df = Ninv * df;
-      df = Minv_ * df;
+      // Transformation from distribution functions to raw moments
+      Vector9d dm = M_ * df;
+      // Transformation from raw moments to central moments
+      Vector9d dmc = N * dm;
+      // Relaxation
+      dmc = S_.asDiagonal() * dmc;
+      // Back transformation from central moments to raw moments
+      dm = Ninv * dmc;
+      // Back transformation from raw moments to distribution funcitons
+      df = Minv_ * dm;
+      // Update distribution functions
       f.col(i) += df;
     }
   }
