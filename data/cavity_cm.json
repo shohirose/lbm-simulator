@@ -9,6 +9,7 @@
     },
     "errorLimit": 1e-6,
     "printFrequency": 2000,
+    "relativeChangeFrequency": 100,
     "maxIteration": 30000,
     "outputDirectory": "./result/cavity_cm"
 }

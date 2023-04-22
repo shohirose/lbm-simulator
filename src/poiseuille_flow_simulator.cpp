@@ -12,6 +12,7 @@ PoiseuilleFlowSimulator::PoiseuilleFlowSimulator(
       g_{},
       error_limit_{params.error_limit},
       print_freq_{params.print_frequency},
+      eps_freq_{params.relative_change_frequency},
       max_iter_{params.max_iter},
       writer_{params.output_directory},
       collision_{create_collision_model(params.collision_params)},
@@ -54,10 +55,12 @@ void PoiseuilleFlowSimulator::run() const {
     calc_density(rho, f);
     this->calc_velocity(u, rho, f);
 
-    eps = ((u - uold).colwise().norm() /
-           u.colwise().norm().maxCoeff<Eigen::PropagateNumbers>())
-              .maxCoeff();
-    uold = u;
+    if (tsteps % eps_freq_ == 0) {
+      eps = ((u - uold).colwise().norm() /
+             u.colwise().norm().maxCoeff<Eigen::PropagateNumbers>())
+                .maxCoeff();
+      uold = u;
+    }
 
     if (print_freq_ > 0 && tsteps % print_freq_ == 0) {
       fmt::print("iter = {}, eps = {:.6e}\n", tsteps, eps);

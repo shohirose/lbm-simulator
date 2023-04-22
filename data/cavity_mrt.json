@@ -14,6 +14,7 @@
     },
     "errorLimit": 1e-6,
     "printFrequency": 2000,
-    "maxIteration": 20000,
+    "relativeChangeFrequency": 100,
+    "maxIteration": 50000,
     "outputDirectory": "./result/cavity_mrt"
 }

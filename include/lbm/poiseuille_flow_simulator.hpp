@@ -21,6 +21,8 @@ struct PoiseuilleFlowParameters {
   std::array<double, 2> external_force;
   double error_limit;
   int print_frequency;
+  /// Frequency of updating the relative change of velocity
+  int relative_change_frequency;
   int max_iter;
   std::string output_directory;
   CollisionParameters collision_params;
@@ -132,6 +134,7 @@ class PoiseuilleFlowSimulator {
   Eigen::Matrix<double, 9, 1> g_;
   double error_limit_;
   int print_freq_;
+  int eps_freq_;
   int max_iter_;
   FileWriter writer_;
   CollisionModel collision_;

@@ -34,6 +34,7 @@ void from_json(const Json& j, CavityFlowParameters& params) {
   j.at("wallVelocity").get_to(params.wall_velocity);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
+  j.at("relativeChangeFrequency").get_to(params.relative_change_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
   if (j.contains("singleRelaxationTimeModel")) {
@@ -61,6 +62,7 @@ void from_json(const Json& j, PoiseuilleFlowParameters& params) {
   j.at("externalForce").get_to(params.external_force);
   j.at("errorLimit").get_to(params.error_limit);
   j.at("printFrequency").get_to(params.print_frequency);
+  j.at("relativeChangeFrequency").get_to(params.relative_change_frequency);
   j.at("maxIteration").get_to(params.max_iter);
   j.at("outputDirectory").get_to(params.output_directory);
   if (j.contains("singleRelaxationTimeModel")) {

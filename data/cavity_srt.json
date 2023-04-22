@@ -8,7 +8,8 @@
         "relaxationTime": 0.65
     },
     "errorLimit": 1e-6,
-    "printFrequency": 500,
-    "maxIteration": 20000,
+    "printFrequency": 2000,
+    "relativeChangeFrequency": 100,
+    "maxIteration": 50000,
     "outputDirectory": "./result/cavity"
 }

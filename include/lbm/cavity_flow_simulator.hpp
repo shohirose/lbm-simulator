@@ -15,10 +15,13 @@
 namespace lbm {
 
 struct CavityFlowParameters {
-  std::array<int, 2> grid_shape;  ///< Grid shape [nx, ny]
+  /// Grid shape [nx, ny]
+  std::array<int, 2> grid_shape;
   double wall_velocity;
   double error_limit;
   int print_frequency;
+  /// Frequency of updating the relative change of velocity
+  int relative_change_frequency;
   int max_iter;
   std::string output_directory;
   CollisionParameters collision_params;
@@ -153,6 +156,7 @@ class CavityFlowSimulator {
   double reynolds_number_;
   double error_limit_;
   int print_freq_;
+  int eps_freq_;
   int max_iter_;
   FileWriter writer_;
   CollisionModel collision_;

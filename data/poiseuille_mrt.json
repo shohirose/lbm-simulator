@@ -8,13 +8,16 @@
         0.0
     ],
     "multipleRelaxationTimeModel": {
-        "se": 1.5,
-        "sq": 1.5,
-        "seps": 1.4,
-        "tau": 0.56
+        "relaxationParameters": {
+            "energy": 1.5,
+            "energyFlux": 1.5,
+            "squaredEnergy": 1.4,
+            "viscosity": 1.785714
+        }
     },
-    "errorLimit": 1e-10,
-    "printFrequency": 5000,
-    "maxIteration": 1000000,
+    "errorLimit": 1e-6,
+    "printFrequency": 2000,
+    "relativeChangeFrequency": 100,
+    "maxIteration": 50000,
     "outputDirectory": "./result/poiseuille_mrt"
 }
