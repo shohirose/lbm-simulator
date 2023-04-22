@@ -1,15 +1,15 @@
 {
     "gridShape": [
-        101,
-        101
+        51,
+        51
     ],
     "wallVelocity": 0.1,
     "centralMomentModel": {
-        "relaxationParameters": [0.0, 0.0, 0.0, 1.0, 1.97652, 1.97652, 1.0, 1.0, 1.0]
+        "relaxationParameters": [0.0, 0.0, 0.0, 1.0, 1.94288, 1.94288, 1.0, 1.0, 1.0]
     },
     "errorLimit": 1e-6,
     "printFrequency": 2000,
     "relativeChangeFrequency": 100,
-    "maxIteration": 30000,
+    "maxIteration": 100000,
     "outputDirectory": "./result/cavity_cm"
 }

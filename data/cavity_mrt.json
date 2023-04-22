@@ -1,7 +1,7 @@
 {
     "gridShape": [
-        52,
-        52
+        51,
+        51
     ],
     "wallVelocity": 0.1,
     "multipleRelaxationTimeModel": {
@@ -9,7 +9,7 @@
             "energy": 1.5,
             "energyFlux": 1.5,
             "squaredEnergy": 1.4,
-            "viscosity": 1.860465
+            "viscosity": 1.86030647415
         }
     },
     "errorLimit": 1e-6,
