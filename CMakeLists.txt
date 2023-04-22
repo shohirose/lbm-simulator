@@ -58,6 +58,7 @@ add_library(lbm
     src/poiseuille_flow_simulator.cpp
     src/multiple_relaxation_time_model.cpp
     src/central_moment_model.cpp
+    src/collision_model.cpp
 )
 target_compile_features(lbm
 PUBLIC
