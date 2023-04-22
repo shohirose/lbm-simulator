@@ -22,40 +22,15 @@ using CollisionModel =
  * @return CollisionModel
  * @throw std::runtime_error
  */
-inline CollisionModel create_collision_model(
-    const CollisionParameters& params) {
-  if (std::holds_alternative<SingleRelaxationTimeModelParameters>(params)) {
-    return SingleRelaxationTimeModel{
-        std::get<SingleRelaxationTimeModelParameters>(params)};
-  } else if (std::holds_alternative<MultipleRelaxationTimeModelParameters>(
-                 params)) {
-    return MultipleRelaxationTimeModel{
-        std::get<MultipleRelaxationTimeModelParameters>(params)};
-  } else if (std::holds_alternative<CentralMomentModelParameters>(params)) {
-    return CentralMomentModel(std::get<CentralMomentModelParameters>(params));
-  } else {
-    throw std::runtime_error(
-        "Error: CollisionParameters holds neither of "
-        "SingleRelaxationTimeModel, MultipleRelaxationTimeModel, or "
-        "CentralMomentModel.");
-  }
-}
+CollisionModel create_collision_model(const CollisionParameters& params);
 
-inline double get_relaxation_time(const CollisionParameters& params) {
-  if (std::holds_alternative<SingleRelaxationTimeModelParameters>(params)) {
-    return std::get<SingleRelaxationTimeModelParameters>(params).tau;
-  } else if (std::holds_alternative<MultipleRelaxationTimeModelParameters>(
-                 params)) {
-    return std::get<MultipleRelaxationTimeModelParameters>(params).tau;
-  } else if (std::holds_alternative<CentralMomentModelParameters>(params)) {
-    return 1 / std::get<CentralMomentModelParameters>(params)[4];
-  } else {
-    throw std::runtime_error(
-        "Error: CollisionParameters holds neither of "
-        "SingleRelaxationTimeModel, MultipleRelaxationTimeModel, or "
-        "CentralMomentModel.");
-  }
-}
+/**
+ * @brief Get the relaxation time for dynamic viscosity
+ *
+ * @param params Collision model parameters
+ * @return double Relaxation time
+ */
+double get_relaxation_time(const CollisionParameters& params);
 
 }  // namespace lbm
 

@@ -5,10 +5,10 @@
     ],
     "wallVelocity": 0.1,
     "singleRelaxationTimeModel": {
-        "tau": 0.65
+        "relaxationTime": 0.65
     },
     "errorLimit": 1e-6,
-    "printFrequency": 2000,
+    "printFrequency": 500,
     "maxIteration": 20000,
     "outputDirectory": "./result/cavity"
 }

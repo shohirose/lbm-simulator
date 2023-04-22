@@ -2,21 +2,22 @@
 #define LBM_MULTIPLE_RELAXATION_TIME_MODEL_HPP
 
 #include <Eigen/Core>
-#include <Eigen/Dense>
+#include <array>
 
 namespace lbm {
 
 struct MultipleRelaxationTimeModelParameters {
-  double se;
-  double sq;
-  double seps;
-  double tau;
+  std::array<double, 9> relaxation_parameters;
 
   MultipleRelaxationTimeModelParameters() = default;
 
-  MultipleRelaxationTimeModelParameters(double se_, double sq_, double seps_,
-                                        double tau_)
-      : se{se_}, sq{sq_}, seps{seps_}, tau{tau_} {}
+  MultipleRelaxationTimeModelParameters(
+      const std::array<double, 9>& relaxation_parameters_)
+      : relaxation_parameters{relaxation_parameters_} {}
+
+  double get_relaxation_time() const noexcept {
+    return 1.0 / relaxation_parameters[7];
+  }
 };
 
 class MultipleRelaxationTimeModel {
@@ -29,10 +30,10 @@ class MultipleRelaxationTimeModel {
 
   /**
    * @brief Apply collision model
-   * 
-   * @tparam T1 
-   * @tparam T2 
-   * @tparam T3 
+   *
+   * @tparam T1
+   * @tparam T2
+   * @tparam T3
    * @param f Distribution function
    * @param feq Equilibrium distribution function
    * @param u Velocity

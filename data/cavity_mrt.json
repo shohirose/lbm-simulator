@@ -5,10 +5,12 @@
     ],
     "wallVelocity": 0.1,
     "multipleRelaxationTimeModel": {
-        "se": 1.5,
-        "sq": 1.5,
-        "seps": 1.4,
-        "tau": 0.5375
+        "relaxationParameters": {
+            "energy": 1.5,
+            "energyFlux": 1.5,
+            "squaredEnergy": 1.4,
+            "viscosity": 1.860465
+        }
     },
     "errorLimit": 1e-6,
     "printFrequency": 2000,

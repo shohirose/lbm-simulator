@@ -7,7 +7,7 @@ namespace lbm {
 CentralMomentModel::CentralMomentModel(
     const CentralMomentModelParameters& params)
     : M_{}, Minv_{}, S_{} {
-  Eigen::Map<const Vector9d> S(params.data());
+  Eigen::Map<const Vector9d> S(params.relaxation_parameters.data());
   S_ = S;
   if (S_(0) != 0 || S_(1) != 0 || S_(2) != 0) {
     S_(0) = 0.0;

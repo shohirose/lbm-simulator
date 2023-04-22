@@ -10,18 +10,20 @@ namespace fs = std::filesystem;
 namespace lbm {
 
 void from_json(const Json& j, SingleRelaxationTimeModelParameters& params) {
-  j.at("tau").get_to(params.tau);
+  j.at("relaxationTime").get_to(params.relaxationTime);
 }
 
 void from_json(const Json& j, MultipleRelaxationTimeModelParameters& params) {
-  j.at("se").get_to(params.se);
-  j.at("sq").get_to(params.sq);
-  j.at("seps").get_to(params.seps);
-  j.at("tau").get_to(params.tau);
+  const auto& p = j.at("relaxationParameters");
+  const auto e = p.at("energy").get<double>();
+  const auto q = p.at("energyFlux").get<double>();
+  const auto e2 = p.at("squaredEnergy").get<double>();
+  const auto nu = p.at("viscosity").get<double>();
+  params.relaxation_parameters = {0.0, e, e2, 0.0, q, 0.0, q, nu, nu};
 }
 
 void from_json(const Json& j, CentralMomentModelParameters& params) {
-  j.at("relaxationMatrix").get_to(params.relaxation_matrix);
+  j.at("relaxationParameters").get_to(params.relaxation_parameters);
 }
 
 /**

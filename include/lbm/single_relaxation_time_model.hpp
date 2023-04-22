@@ -6,11 +6,14 @@
 namespace lbm {
 
 struct SingleRelaxationTimeModelParameters {
-  double tau;  ///< Relaxation time
+  double relaxationTime;
 
   SingleRelaxationTimeModelParameters() = default;
 
-  SingleRelaxationTimeModelParameters(double tau_) : tau{tau_} {}
+  SingleRelaxationTimeModelParameters(double relaxationTime_)
+      : relaxationTime{relaxationTime_} {}
+
+  double get_relaxation_time() const noexcept { return relaxationTime; }
 };
 
 class SingleRelaxationTimeModel {
@@ -21,14 +24,14 @@ class SingleRelaxationTimeModel {
    * @param relaxation_time Relaxation time
    */
   SingleRelaxationTimeModel(const SingleRelaxationTimeModelParameters& params)
-      : tau_{params.tau} {}
+      : tau_{params.relaxationTime} {}
 
   /**
    * @brief Apply collision model
-   * 
-   * @tparam T1 
-   * @tparam T2 
-   * @tparam T3 
+   *
+   * @tparam T1
+   * @tparam T2
+   * @tparam T3
    * @param f Distribution function
    * @param feq Equilibrium distribution function
    * @param u Velocity

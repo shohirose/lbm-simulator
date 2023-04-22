@@ -5,7 +5,7 @@
     ],
     "wallVelocity": 0.1,
     "centralMomentModel": {
-        "relaxationMatrix": [0.0, 0.0, 0.0, 1.0, 1.97652, 1.97652, 1.0, 1.0, 1.0]
+        "relaxationParameters": [0.0, 0.0, 0.0, 1.0, 1.97652, 1.97652, 1.0, 1.0, 1.0]
     },
     "errorLimit": 1e-6,
     "printFrequency": 2000,

@@ -9,30 +9,16 @@
 namespace lbm {
 
 struct CentralMomentModelParameters {
-  std::array<double, 9> relaxation_matrix;
+  std::array<double, 9> relaxation_parameters;
 
   CentralMomentModelParameters() = default;
 
   CentralMomentModelParameters(const std::array<double, 9>& s_)
-      : relaxation_matrix{s_} {}
+      : relaxation_parameters{s_} {}
 
-  CentralMomentModelParameters(const CentralMomentModelParameters&) = default;
-  CentralMomentModelParameters(CentralMomentModelParameters&&) = default;
-
-  CentralMomentModelParameters& operator=(
-      const std::array<double, 9>& s) noexcept {
-    relaxation_matrix = s;
+  double get_relaxation_time() const noexcept {
+    return 1.0 / relaxation_parameters[4];
   }
-  CentralMomentModelParameters& operator=(const CentralMomentModelParameters&) =
-      default;
-  CentralMomentModelParameters& operator=(CentralMomentModelParameters&&) =
-      default;
-
-  auto* data() noexcept { return relaxation_matrix.data(); }
-  const auto* data() const noexcept { return relaxation_matrix.data(); }
-
-  auto& operator[](int i) noexcept { return relaxation_matrix[i]; }
-  const auto& operator[](int i) const noexcept { return relaxation_matrix[i]; }
 };
 
 class CentralMomentModel {
@@ -44,10 +30,10 @@ class CentralMomentModel {
 
   /**
    * @brief Apply collision model
-   * 
-   * @tparam T1 
-   * @tparam T2 
-   * @tparam T3 
+   *
+   * @tparam T1
+   * @tparam T2
+   * @tparam T3
    * @param f Distribution function
    * @param feq Equilibrium distribution function
    * @param u Velocity
