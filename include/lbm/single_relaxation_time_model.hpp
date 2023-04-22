@@ -9,7 +9,7 @@ struct SingleRelaxationTimeModelParameters {
   double tau;  ///< Relaxation time
 
   SingleRelaxationTimeModelParameters() = default;
-  
+
   SingleRelaxationTimeModelParameters(double tau_) : tau{tau_} {}
 };
 
@@ -23,13 +23,20 @@ class SingleRelaxationTimeModel {
   SingleRelaxationTimeModel(const SingleRelaxationTimeModelParameters& params)
       : tau_{params.tau} {}
 
-  template <typename T1, typename T2>
-  void apply(Eigen::MatrixBase<T1>& f,
-             const Eigen::MatrixBase<T2>& feq) const noexcept {
-    // f = f - (f - feq)/tau_;
-    const auto alpha = 1 / tau_;
-    f *= 1 - alpha;
-    f.noalias() += feq * alpha;
+  /**
+   * @brief Apply collision model
+   * 
+   * @tparam T1 
+   * @tparam T2 
+   * @tparam T3 
+   * @param f Distribution function
+   * @param feq Equilibrium distribution function
+   * @param u Velocity
+   */
+  template <typename T1, typename T2, typename T3>
+  void apply(Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
+             [[maybe_unused]] const Eigen::MatrixBase<T3>& u) const noexcept {
+    f = f - (1 / tau_) * (f - feq);
   }
 
  private:

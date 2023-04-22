@@ -42,6 +42,16 @@ class CentralMomentModel {
 
   CentralMomentModel(const CentralMomentModelParameters& params);
 
+  /**
+   * @brief Apply collision model
+   * 
+   * @tparam T1 
+   * @tparam T2 
+   * @tparam T3 
+   * @param f Distribution function
+   * @param feq Equilibrium distribution function
+   * @param u Velocity
+   */
   template <typename T1, typename T2, typename T3>
   void apply(Eigen::MatrixBase<T1>& f, const Eigen::MatrixBase<T2>& feq,
              const Eigen::MatrixBase<T3>& u) const noexcept {

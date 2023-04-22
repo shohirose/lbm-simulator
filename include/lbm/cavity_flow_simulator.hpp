@@ -62,19 +62,8 @@ class CavityFlowSimulator {
   void run_collision_process(Eigen::MatrixBase<T1>& f,
                              const Eigen::MatrixBase<T2>& feq,
                              const Eigen::MatrixBase<T3>& u) const {
-    if (std::holds_alternative<SingleRelaxationTimeModel>(collision_)) {
-      std::get<SingleRelaxationTimeModel>(collision_).apply(f, feq);
-    } else if (std::holds_alternative<MultipleRelaxationTimeModel>(
-                   collision_)) {
-      std::get<MultipleRelaxationTimeModel>(collision_).apply(f, feq);
-    } else if (std::holds_alternative<CentralMomentModel>(collision_)) {
-      std::get<CentralMomentModel>(collision_).apply(f, feq, u);
-    } else {
-      throw std::runtime_error(
-          "Error: CollisionModel holds neither of "
-          "SingleRelaxationTimeModel, MultipleRelaxationTimeModel, or "
-          "CentralMomentModel.");
-    }
+    std::visit([&f, &feq, &u](const auto& model) { model.apply(f, feq, u); },
+               collision_);
   }
 
   template <typename T1, typename T2>
